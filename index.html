@@ -3,13 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe</title>
+    <title>Premium Tic Tac Toe</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Tic Tac Toe</h1>
+    <!-- Setup Modal -->
+    <div id="setup-modal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Premium Tic Tac Toe</h2>
+            <div class="input-group">
+                <label for="player-x">Player X Name:</label>
+                <input type="text" id="player-x" placeholder="Enter name" value="Player X">
+            </div>
+            <div class="input-group">
+                <label for="player-o">Player O Name:</label>
+                <input type="text" id="player-o" placeholder="Enter name" value="Player O">
+            </div>
+            <button id="start-game-btn" class="primary-btn">Start Game</button>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div class="container" id="game-container" style="display: none;">
+        <div class="header">
+            <h1>Tic Tac Toe</h1>
+            <div class="scores">
+                <div class="score-badge" id="score-x">
+                    <span class="player-name" id="name-display-x">Player X</span>: <span id="points-x">0</span>
+                </div>
+                <div class="score-badge" id="score-o">
+                    <span class="player-name" id="name-display-o">Player O</span>: <span id="points-o">0</span>
+                </div>
+            </div>
+        </div>
+        
         <div class="status" id="status">Player X's turn</div>
+        
         <div class="board" id="board">
             <div class="cell" data-index="0"></div>
             <div class="cell" data-index="1"></div>
@@ -21,8 +52,16 @@
             <div class="cell" data-index="7"></div>
             <div class="cell" data-index="8"></div>
         </div>
-        <button class="reset-btn" id="reset-btn">Restart Game</button>
+        
+        <div class="controls">
+            <button class="secondary-btn" id="reset-btn">Restart Match</button>
+            <button class="secondary-btn" id="change-players-btn">Change Players</button>
+        </div>
     </div>
+
+    <!-- Container for floating emojis -->
+    <div id="emoji-container"></div>
+
     <script src="script.js"></script>
 </body>
 </html>
