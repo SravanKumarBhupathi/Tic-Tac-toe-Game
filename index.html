@@ -13,13 +13,31 @@
     <div id="setup-modal" class="modal">
         <div class="modal-content">
             <h2>Welcome to Premium Tic Tac Toe</h2>
+            <div class="input-group mode-selection">
+                <label>Game Mode:</label>
+                <div>
+                    <input type="radio" id="mode-local" name="game-mode" value="local" checked>
+                    <label for="mode-local" style="display:inline; font-weight:normal; margin-right:15px;">Local (2 Players)</label>
+
+                    <input type="radio" id="mode-bot" name="game-mode" value="bot">
+                    <label for="mode-bot" style="display:inline; font-weight:normal;">Vs Bot</label>
+                </div>
+            </div>
             <div class="input-group">
                 <label for="player-x">Player X Name:</label>
                 <input type="text" id="player-x" placeholder="Enter name" value="Player X">
             </div>
-            <div class="input-group">
+            <div class="input-group" id="player-o-container">
                 <label for="player-o">Player O Name:</label>
                 <input type="text" id="player-o" placeholder="Enter name" value="Player O">
+            </div>
+            <div class="input-group" id="bot-difficulty-container" style="display:none;">
+                <label for="bot-difficulty">Bot Difficulty:</label>
+                <select id="bot-difficulty" style="width: 100%; padding: 0.8rem 1rem; border: 2px solid #eee; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 1rem;">
+                    <option value="easy">Easy</option>
+                    <option value="hard">Hard</option>
+                    <option value="extreme">Extreme</option>
+                </select>
             </div>
             <button id="start-game-btn" class="primary-btn">Start Game</button>
         </div>
