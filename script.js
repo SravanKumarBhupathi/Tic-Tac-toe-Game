@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameState = ['', '', '', '', '', '', '', '', ''];
     let scores = { X: 0, O: 0 };
     let players = { X: 'Player X', O: 'Player O' };
+    let gameMode = 'local';
+    let botDifficulty = 'easy';
 
     const smartEmojis = ['🧠', '🔥', '✨', '🎯', '⚡', '🌟', '🚀', '😎'];
 
@@ -66,13 +68,37 @@ document.addEventListener('DOMContentLoaded', () => {
         [0, 4, 8], [2, 4, 6]
     ];
 
+    // Mode Selection logic
+    const modeRadios = document.querySelectorAll('input[name="game-mode"]');
+    const playerOContainer = document.getElementById('player-o-container');
+    const botDifficultyContainer = document.getElementById('bot-difficulty-container');
+
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'bot') {
+                playerOContainer.style.display = 'none';
+                botDifficultyContainer.style.display = 'block';
+            } else {
+                playerOContainer.style.display = 'block';
+                botDifficultyContainer.style.display = 'none';
+            }
+        });
+    });
+
     // Setup Game
     startGameBtn.addEventListener('click', () => {
+        gameMode = document.querySelector('input[name="game-mode"]:checked').value;
+        botDifficulty = document.getElementById('bot-difficulty').value;
+
         const xInput = document.getElementById('player-x').value.trim();
         const oInput = document.getElementById('player-o').value.trim();
         
         players.X = xInput || 'Player X';
-        players.O = oInput || 'Player O';
+        if (gameMode === 'bot') {
+            players.O = 'Bot';
+        } else {
+            players.O = oInput || 'Player O';
+        }
         
         document.getElementById('name-display-x').innerText = players.X;
         document.getElementById('name-display-o').innerText = players.O;
@@ -166,6 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
         statusDisplay.innerHTML = currentPlayerTurnMsg();
         updateScoreDisplay();
+
+        if (gameMode === 'bot' && currentPlayer === 'O' && gameActive) {
+            setTimeout(makeBotMove, 500); // 500ms delay for better UX
+        }
     }
 
     function handleResultValidation() {
@@ -217,7 +247,116 @@ document.addEventListener('DOMContentLoaded', () => {
         handlePlayerChange();
     }
 
+    function getBestMove(board, player) {
+        const availableSpots = board.reduce((acc, cell, index) => {
+            if (cell === '') acc.push(index);
+            return acc;
+        }, []);
+
+        if (checkWin(board, 'X')) {
+            return { score: -10 };
+        } else if (checkWin(board, 'O')) {
+            return { score: 10 };
+        } else if (availableSpots.length === 0) {
+            return { score: 0 };
+        }
+
+        const moves = [];
+        for (let i = 0; i < availableSpots.length; i++) {
+            const move = {};
+            move.index = availableSpots[i];
+            board[availableSpots[i]] = player;
+
+            if (player === 'O') {
+                const result = getBestMove(board, 'X');
+                move.score = result.score;
+            } else {
+                const result = getBestMove(board, 'O');
+                move.score = result.score;
+            }
+
+            board[availableSpots[i]] = '';
+            moves.push(move);
+        }
+
+        let bestMove;
+        if (player === 'O') {
+            let bestScore = -10000;
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].score > bestScore) {
+                    bestScore = moves[i].score;
+                    bestMove = i;
+                }
+            }
+        } else {
+            let bestScore = 10000;
+            for (let i = 0; i < moves.length; i++) {
+                if (moves[i].score < bestScore) {
+                    bestScore = moves[i].score;
+                    bestMove = i;
+                }
+            }
+        }
+
+        return moves[bestMove];
+    }
+
+    function checkWin(board, player) {
+        for (let i = 0; i < winningConditions.length; i++) {
+            const [a, b, c] = winningConditions[i];
+            if (board[a] === player && board[b] === player && board[c] === player) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function makeRandomMove() {
+        const availableSpots = gameState.reduce((acc, cell, index) => {
+            if (cell === '') acc.push(index);
+            return acc;
+        }, []);
+
+        if (availableSpots.length === 0) return -1;
+        const randomIndex = Math.floor(Math.random() * availableSpots.length);
+        return availableSpots[randomIndex];
+    }
+
+    function makeBotMove() {
+        if (!gameActive) return;
+
+        let moveIndex = -1;
+
+        if (botDifficulty === 'easy') {
+            moveIndex = makeRandomMove();
+        } else if (botDifficulty === 'extreme') {
+            moveIndex = getBestMove([...gameState], 'O').index;
+        } else if (botDifficulty === 'hard') {
+            // Mix of random and best move (e.g. 50% random, 50% best)
+            if (Math.random() < 0.5) {
+                moveIndex = makeRandomMove();
+            } else {
+                moveIndex = getBestMove([...gameState], 'O').index;
+            }
+        }
+
+        if (moveIndex !== -1) {
+            const cell = cells[moveIndex];
+            // Mock event for bot
+            const mockEvent = {
+                clientX: cell.getBoundingClientRect().left + cell.getBoundingClientRect().width / 2,
+                clientY: cell.getBoundingClientRect().top + cell.getBoundingClientRect().height / 2
+            };
+            handleCellPlayed(cell, moveIndex, mockEvent);
+            handleResultValidation();
+        }
+    }
+
     function handleCellClick(clickedCellEvent) {
+        if (gameMode === 'bot' && currentPlayer === 'O') {
+            return; // Ignore clicks while bot is thinking or playing
+        }
+
         const clickedCell = clickedCellEvent.target;
         const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
 
