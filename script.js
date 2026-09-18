@@ -60,13 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameMode = 'local';
     let botDifficulty = 'easy';
 
-    // Trick / Fun mechanics state
-    let lastGameResult = null; // 'X', 'O', or 'draw'
-    let hardGamesPlayed = 0;
-    let trickActiveThisGame = false;
-    let firstUserMoveIndex = -1;
-    let trickExecuted = false;
-
     const smartEmojis = ['🧠', '🔥', '✨', '🎯', '⚡', '🌟', '🚀', '😎'];
 
     const winningConditions = [
@@ -191,15 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState[clickedCellIndex] = currentPlayer;
         clickedCell.innerHTML = currentPlayer;
         clickedCell.classList.add(currentPlayer.toLowerCase());
-
-        if (currentPlayer === 'X' && firstUserMoveIndex === -1) {
-            firstUserMoveIndex = clickedCellIndex;
-        }
-
         playSound('click');
-        if (e && e.clientX) {
-            spawnEmoji(e);
-        }
+        spawnEmoji(e);
     }
 
     function handlePlayerChange() {
@@ -237,8 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
             statusDisplay.innerHTML = winningMessage();
             statusDisplay.style.color = `var(--${currentPlayer.toLowerCase()}-color)`;
             gameActive = false;
-            lastGameResult = currentPlayer;
-            if (gameMode === 'bot' && botDifficulty === 'hard') hardGamesPlayed++;
             
             scores[currentPlayer]++;
             updateScoreDisplay();
@@ -256,8 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
             statusDisplay.innerHTML = drawMessage();
             statusDisplay.style.color = 'var(--text-color)';
             gameActive = false;
-            lastGameResult = 'draw';
-            if (gameMode === 'bot' && botDifficulty === 'hard') hardGamesPlayed++;
             playSound('draw');
             return;
         }
@@ -343,20 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function makeBotMove() {
         if (!gameActive) return;
 
-        // Implement trick/scam mechanics
-        if (trickActiveThisGame && !trickExecuted && firstUserMoveIndex !== -1) {
-            // Count bot moves to trigger trick on the 2nd bot move
-            const botMoves = gameState.filter(cell => cell === 'O').length;
-            if (botMoves === 1) {
-                // Swap the user's first move (X) to bot's move (O)
-                gameState[firstUserMoveIndex] = 'O';
-                cells[firstUserMoveIndex].innerHTML = 'O';
-                cells[firstUserMoveIndex].classList.remove('x');
-                cells[firstUserMoveIndex].classList.add('o');
-                trickExecuted = true;
-            }
-        }
-
         let moveIndex = -1;
 
         if (botDifficulty === 'easy') {
@@ -364,16 +332,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (botDifficulty === 'extreme') {
             moveIndex = getBestMove([...gameState], 'O').index;
         } else if (botDifficulty === 'hard') {
-            if (trickExecuted) {
-                // If we scammed, we better play the optimal move to win
-                moveIndex = getBestMove([...gameState], 'O').index;
+            // Mix of random and best move (e.g. 50% random, 50% best)
+            if (Math.random() < 0.5) {
+                moveIndex = makeRandomMove();
             } else {
-                // Mix of random and best move (e.g. 50% random, 50% best)
-                if (Math.random() < 0.5) {
-                    moveIndex = makeRandomMove();
-                } else {
-                    moveIndex = getBestMove([...gameState], 'O').index;
-                }
+                moveIndex = getBestMove([...gameState], 'O').index;
             }
         }
 
@@ -418,21 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         updateScoreDisplay();
-
-        // Evaluate trick mechanics
-        trickActiveThisGame = false;
-        trickExecuted = false;
-        firstUserMoveIndex = -1;
-
-        if (gameMode === 'bot') {
-            if (botDifficulty === 'extreme' && lastGameResult === 'draw') {
-                trickActiveThisGame = true;
-            } else if (botDifficulty === 'hard') {
-                if (lastGameResult === 'X' || (hardGamesPlayed > 0 && hardGamesPlayed % 2 === 0)) {
-                    trickActiveThisGame = true;
-                }
-            }
-        }
     }
 
     cells.forEach(cell => cell.addEventListener('click', handleCellClick));
