@@ -46,6 +46,16 @@
     <!-- Main Game Container -->
     <div class="container" id="game-container" style="display: none;">
         <div class="header">
+        <div class="header-controls">
+            <button id="voice-toggle-btn" class="icon-btn" aria-label="Toggle Voice" title="Voice Off">
+                <span class="icon">🔇</span>
+            </button>
+        </div>
+
+        <div class="dialogue-container" id="dialogue-container">
+            <div class="dialogue-text" id="dialogue-text"></div>
+        </div>
+
             <h1>Tic Tac Toe</h1>
             <div class="scores">
                 <div class="score-badge" id="score-x">
@@ -74,6 +84,20 @@
         <div class="controls">
             <button class="secondary-btn" id="reset-btn">Restart Match</button>
             <button class="secondary-btn" id="change-players-btn">Change Players</button>
+        </div>
+    </div>
+
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div id="result-icon" style="font-size: 4rem; margin-bottom: 1rem;">🏆</div>
+            <h2 id="result-title">Player X WINS!</h2>
+            <p id="result-message" style="margin-bottom: 2rem; font-size: 1.1rem; color: #495057;"></p>
+            <div style="display: flex; gap: 1rem;">
+                <button id="rematch-btn" class="primary-btn">🔄 Rematch</button>
+                <button id="home-btn" class="secondary-btn">🏠 Home</button>
+            </div>
         </div>
     </div>
 

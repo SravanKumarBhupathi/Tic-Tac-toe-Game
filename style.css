@@ -334,3 +334,69 @@ button {
     50% { transform: translateY(-50px) scale(1.2); opacity: 0.8; }
     100% { transform: translateY(-100px) scale(1); opacity: 0; }
 }
+
+/* Header Controls & Voice Toggle */
+.header-controls {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
+}
+
+.icon-btn {
+    background: white;
+    border: 2px solid #eee;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.icon-btn:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.icon-btn.active {
+    border-color: var(--primary-color);
+    background: rgba(255, 140, 0, 0.1);
+}
+
+/* Dialogue Container */
+.dialogue-container {
+    background: white;
+    border: 2px solid #eee;
+    border-radius: 15px;
+    padding: 1rem;
+    margin: 1rem 0;
+    min-height: 3.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.dialogue-container.visible {
+    opacity: 1;
+}
+
+.dialogue-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #495057;
+    margin: 0;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Make container position relative for absolute positioning of header controls */
+.container {
+    position: relative;
+}
