@@ -64,19 +64,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DIALOGUE & VOICE ENGINE ---
     const specialPlayers = {
+        'default': {
+            start: ["Good luck, you'll need it.", "Let the games begin!"],
+            turn: ["Your move...", "Taking your time, huh?"],
+            move: ["Interesting.", "Alright then.", "Bold move."],
+            nearWin: ["Almost there!", "Don't mess this up."],
+            win: ["Congratulations, you won!", "Nice victory!"],
+            lose: ["Better luck next time.", "Ouch, that hurts."],
+            tie: ["A draw. How anticlimactic.", "Well matched!"]
+        },
         'vidya': {
             start: ["Oh, it's YOU. Prepare to lose. 🙄", "Finally, a worthy opponent... wait, it's just Vidya. 😂"],
-            turn: ["Thinking... thinking... nope, still nothing in there. 🧠💤", "Are you going to move today or what?", "My grandma plays faster than you. 👵"],
+            turn: ["Vidya is thinking...", "Are you going to move today or what, Vidya?", "My grandma plays faster than you. 👵"],
             move: ["Oof, bold move. I'd have played elsewhere. 😬", "Are you sure about that one? 🧐", "I guess that's ONE way to play..."],
             nearWin: ["Oh wow, you might actually win. Did you cheat? 🤨", "Don't choke now! 📉"],
             win: ["Beginner's luck. 😒", "Okay, you win. Do you want a medal? 🏅"],
+            winBot: ["VIDYA BEAT THE BOT! 🏆🔥"],
             lose: ["As expected. Better luck next lifetime. 💀", "I tried to go easy on you, I really did. 😔"],
-            tie: ["A tie? You're equally as bad as me. 🤝", "Boring. Let's play again so I can win. 🥱"]
+            tie: ["Vidya, can you please stop drinking Magic Moments? Then you might actually focus and win the match. 😜"]
         }
     };
 
     let voiceEnabled = false;
     let currentDialoguePriority = 0; // 0 = Turn/Move, 1 = Near Win/Start, 2 = Game Over Result
+    let dialogueTimeout;
 
     const dialogueContainer = document.getElementById('dialogue-container');
     const dialogueText = document.getElementById('dialogue-text');
@@ -111,13 +122,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function showDialogue(playerId, type, priority = 0) {
         if (priority < currentDialoguePriority) return; // Don't override higher priority messages
 
-        let nameRaw = document.getElementById(`player-${playerId}`).value;
-        if (gameMode === 'bot' && playerId === 'o') {
-            nameRaw = 'bot';
-        }
+        let nameRaw = playerId === 'x' ? players.X : players.O;
 
-        if (!nameRaw) return;
-        const nameKey = nameRaw.trim().toLowerCase();
+        // Ensure "Vidya" match works even if they typed "Vidya "
+        if (nameRaw) nameRaw = nameRaw.trim();
+        let nameKey = nameRaw ? nameRaw.toLowerCase() : 'default';
+
+        if (!specialPlayers[nameKey]) {
+            nameKey = 'default';
+        }
 
         if (specialPlayers[nameKey] && specialPlayers[nameKey][type]) {
             const options = specialPlayers[nameKey][type];
@@ -128,13 +141,16 @@ document.addEventListener('DOMContentLoaded', () => {
             currentDialoguePriority = priority;
             speakDialogue(selectedText);
 
-            // Auto hide after 5 seconds if it's a low priority message
-            if (priority === 0) {
-                setTimeout(() => {
-                    if (currentDialoguePriority === 0) {
+            clearTimeout(dialogueTimeout);
+
+            // Reset priority back to 0 after 4 seconds so normal turn messages can resume
+            if (priority < 2) {
+                dialogueTimeout = setTimeout(() => {
+                    if (currentDialoguePriority < 2) {
                         dialogueContainer.classList.remove('visible');
+                        currentDialoguePriority = 0;
                     }
-                }, 5000);
+                }, 4000);
             }
         }
     }
@@ -188,6 +204,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
         resetGame();
+
+        // Trigger start dialogue
+        if (gameMode === 'local') {
+            const isVidyaX = players.X.trim().toLowerCase() === 'vidya';
+            const isVidyaO = players.O.trim().toLowerCase() === 'vidya';
+            if (isVidyaX || isVidyaO) {
+                const combinedMsg = `Welcome ${players.X} & ${players.O}! 🔥`;
+                dialogueText.innerText = combinedMsg;
+                dialogueContainer.classList.add('visible');
+                currentDialoguePriority = 1;
+                speakDialogue(combinedMsg);
+
+                dialogueTimeout = setTimeout(() => {
+                    dialogueContainer.classList.remove('visible');
+                    currentDialoguePriority = 0;
+                }, 4000);
+            } else {
+                showDialogue('x', 'start', 1);
+            }
+        } else {
+            showDialogue('x', 'start', 1);
+        }
     });
 
     changePlayersBtn.addEventListener('click', () => {
@@ -273,11 +311,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (gameMode === 'bot' && currentPlayer === 'O' && gameActive) {
             setTimeout(makeBotMove, 500); // 500ms delay for better UX
+        } else if (gameActive) {
+            // Player's turn to move
+            if (Math.random() < 0.4) { // 40% chance to say a turn joke
+                showDialogue(currentPlayer.toLowerCase(), 'turn', 0);
+            } else if (Math.random() < 0.3) {
+                // Taunt the opponent
+                showDialogue(currentPlayer === 'X' ? 'o' : 'x', 'move', 0);
+            }
         }
     }
 
     function handleResultValidation() {
         let roundWon = false;
+        let nearWin = false;
         let winningCells = [];
         
         for (let i = 0; i <= 7; i++) {
@@ -286,6 +333,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let b = gameState[winCondition[1]];
             let c = gameState[winCondition[2]];
             
+            // Check for near win
+            const arr = [a, b, c];
+            const pCount = arr.filter(v => v === currentPlayer).length;
+            const eCount = arr.filter(v => v === '').length;
+            if (pCount === 2 && eCount === 1) {
+                nearWin = true;
+            }
+
             if (a === '' || b === '' || c === '') {
                 continue;
             }
@@ -295,6 +350,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 winningCells = winCondition;
                 break;
             }
+        }
+
+        if (nearWin && !roundWon && gameActive) {
+            showDialogue(currentPlayer.toLowerCase(), 'nearWin', 1);
         }
 
         if (roundWon) {
@@ -310,6 +369,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             triggerWinCelebration();
+
+            if (gameMode === 'bot' && currentPlayer === 'X' && players.X.trim().toLowerCase() === 'vidya') {
+                showDialogue('x', 'winBot', 2);
+            } else {
+                showDialogue(currentPlayer.toLowerCase(), 'win', 2);
+                setTimeout(() => showDialogue(currentPlayer === 'X' ? 'o' : 'x', 'lose', 2), 3000); // delay loser quote
+            }
+
+            const pName = players[currentPlayer];
+            let dialogueMsg = '';
+            if (currentDialoguePriority === 2 && dialogueContainer.classList.contains('visible')) {
+                dialogueMsg = `<br/><br/><i>"${dialogueText.innerText}"</i>`;
+            }
+            showResultModal("🏆", `${pName} WINS!`, `Outstanding move.` + dialogueMsg);
+
             return;
         }
 
@@ -319,6 +393,21 @@ document.addEventListener('DOMContentLoaded', () => {
             statusDisplay.style.color = 'var(--text-color)';
             gameActive = false;
             playSound('draw');
+
+            // Prioritize Vidya's tie message
+            if (players.X.trim().toLowerCase() === 'vidya') {
+                showDialogue('x', 'tie', 2);
+            } else if (players.O.trim().toLowerCase() === 'vidya') {
+                showDialogue('o', 'tie', 2);
+            } else {
+                showDialogue('x', 'tie', 2);
+            }
+            let dialogueMsg = '';
+            if (currentDialoguePriority === 2 && dialogueContainer.classList.contains('visible')) {
+                dialogueMsg = `<br/><br/><i>"${dialogueText.innerText}"</i>`;
+            }
+            showResultModal("🤝", "IT'S A TIE!", dialogueMsg);
+
             return;
         }
 
