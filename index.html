@@ -54,9 +54,19 @@
             </button>
         </div>
 
-        <div class="dialogue-container" id="dialogue-container">
-            <div class="dialogue-text" id="dialogue-text"></div>
+        <div class="dialogue-wrapper" id="dialogue-wrapper">
+            <div class="dialogue-header">😈 GAME COMMENTARY</div>
+            <div class="dialogue-container" id="dialogue-container">
+                <div class="dialogue-text" id="dialogue-text"></div>
+            </div>
+            <div class="dialogue-controls" id="dialogue-controls" style="display: none;">
+                <span class="speaking-indicator">🔊 Speaking...</span>
+                <button id="skip-voice-btn" class="skip-btn">SKIP ▶</button>
+            </div>
         </div>
+
+        <!-- Board Lock Overlay -->
+        <div id="board-lock-overlay" class="board-lock-overlay"></div>
 
             <h1>Tic Tac Toe</h1>
             <div class="scores">

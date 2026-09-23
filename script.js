@@ -1,62 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Audio Context Setup
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    let audioCtx = new AudioContext();
-
-    function playSound(type) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        
-        if (type === 'click') {
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
-        } else if (type === 'win') {
-            oscillator.type = 'triangle';
-            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-            oscillator.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1);
-            oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2);
-            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.3);
-            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.8);
-        } else if (type === 'draw') {
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-            oscillator.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.4);
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.4);
-        }
-    }
-
-    // DOM Elements
     const board = document.getElementById('board');
     const cells = document.querySelectorAll('.cell');
     const statusDisplay = document.getElementById('status');
     const resetButton = document.getElementById('reset-btn');
-    const changePlayersBtn = document.getElementById('change-players-btn');
     const setupModal = document.getElementById('setup-modal');
     const gameContainer = document.getElementById('game-container');
     const startGameBtn = document.getElementById('start-game-btn');
-    const emojiContainer = document.getElementById('emoji-container');
+    const changePlayersBtn = document.getElementById('change-players-btn');
 
-    // Game State
     let gameActive = false;
     let currentPlayer = 'X';
     let gameState = ['', '', '', '', '', '', '', '', ''];
     let scores = { X: 0, O: 0 };
     let players = { X: 'Player X', O: 'Player O' };
+
     let gameMode = 'local';
     let botDifficulty = 'easy';
 
@@ -70,52 +27,132 @@ document.addEventListener('DOMContentLoaded', () => {
     const smartEmojis = ['🧠', '🔥', '✨', '🎯', '⚡', '🌟', '🚀', '😎'];
 
     // --- DIALOGUE & VOICE ENGINE ---
+
+    function normalizePlayerName(name) {
+        if (!name) return '';
+        return name.trim().toLowerCase();
+    }
+
+    function getOpponentName(currentPlayerId) {
+        if (currentPlayerId === 'x') {
+            return players.O === 'Bot' ? 'the AI Bot' : players.O;
+        }
+        return players.X === 'Bot' ? 'the AI Bot' : players.X;
+    }
+
     const specialPlayers = {
         'default': {
-            start: ["Good luck, you'll need it.", "Let the games begin!"],
-            turn: ["Your move...", "Taking your time, huh?"],
-            move: ["Interesting.", "Alright then.", "Bold move."],
-            nearWin: ["Almost there!", "Don't mess this up."],
-            win: ["Congratulations, you won!", "Nice victory!"],
-            lose: ["Better luck next time.", "Ouch, that hurts."],
-            tie: ["A draw. How anticlimactic.", "Well matched!"]
+            start: ["Alright... let's see who regrets starting this game first. 😂", "Game started. Friendship status: potentially unstable. 😈"],
+            turn: ["Still thinking? It's only X and O. 😭"],
+            move: ["Interesting choice... questionable, but interesting. 😂", "The board definitely did not deserve that move. 😭", "Okay... that was actually smart. 👀", "Wait... you actually know how to play? 😳"],
+            nearWin: ["OHHH! Someone is getting dangerous. 🔥", "One more mistake and it's over. 😈"],
+            block: ["Nice save! 👀", "You just saved yourself from embarrassment. 😂"],
+            win: ["🏆 Victory! Someone's confidence just increased by 200%. 😂"],
+            lose: ["GG! 😂 Maybe pretend the Wi-Fi disconnected."],
+            tie: ["🤝 It's a tie! Nobody won. Nobody lost. Perfect excuse for a rematch. 😂"]
+        },
+        'sravan': {
+            start: ["THE HERO HAS ENTERED THE GAME! 🦸🔥", "Everyone remain calm. Sravan is cooking. 🔥😎", "Sravan has entered. This game just became unfair. 😂", "The Hero has arrived. Everyone else may now panic. 😎"],
+            turn: ["Sravan is calculating... or pretending to. 😎"],
+            move: ["The Hero has made his move. 😎", "That wasn't a move. That was a warning. 😂", "Hero move detected. 🦸🔥"],
+            nearWin: ["The Hero is about to strike. ⚡"],
+            block: ["Heroic block! 🛡️"],
+            heroIntervention: ["🚨 HERO MODE ACTIVATED! 🚨 Relax everyone. The Hero cannot lose. 😎", "The universe has corrected the mistake. 😂", "Nice try. But Sravan is the Hero. 🦸"],
+            win: ["SRAVAN WINS! 🦸🔥 As expected. The Hero has saved the day again.", "SRAVAN WINS! 😎 Did anyone seriously expect another result?", "Victory achieved. The Hero remains undefeated. 🦸🏆"],
+            lose: ["Wait, the Hero lost? This is a glitch in the matrix."],
+            tie: ["It's a tie! Even the Hero decided to be generous. 😂", "Sravan didn't lose. That's what matters. 😎"]
+        },
+        'keerthi': {
+            start: [
+                (opp) => `Ohhh wow! Keerthi entered! 😂 ${opp}, just give the game to Keerthi and go somewhere else.`,
+                (opp) => `Ohhh wow! Keerthi is here! 😳 ${opp}, save yourself some embarrassment and go somewhere else. 😂`,
+                (opp) => `Keerthi entered the game! 🔥 ${opp}, I suggest you reconsider your life choices. 😂`
+            ],
+            turn: ["Keerthi is contemplating the universe..."],
+            move: ["Keerthi places a mark. Watch and learn."],
+            nearWin: ["Keerthi is closing in!"],
+            block: ["Keerthi denies you!"],
+            win: [
+                (opp) => `${opp}, I told you before the game started. You should've gone somewhere else. 😂`,
+                (opp) => `Keerthi wins! 🏆 ${opp}, next time listen when I give you advice. 😂`,
+                (opp) => `Keerthi wins! 😎 ${opp} was warned. ${opp} ignored the warning. ${opp} suffered. 😂`
+            ],
+            lose: [
+                "So sad, Keerthi! 😂 Maybe it's time to change your friend circle. Vidya's brainless energy is clearly contagious. Be careful next time! 😜",
+                "Keerthi lost! 😭😂 I think you need a new strategy... and possibly a new friend circle. 😜",
+                "Oh no Keerthi! 😂 Your brain 🧠 was clearly affected by too much Vidya influence. Recovery recommended before the next match. 😜"
+            ],
+            tie: [
+                "It's a tie! 🤝 Keerthi, you definitely have the brain 🧠... but after travelling with Vidya, some of that brainpower seems to have gone missing. 😂😜",
+                "It's a tie! 😂 Keerthi has the brain 🧠, but travelling with Vidya seems to have put it into airplane mode. ✈️🧠",
+                "Draw game! 🤝 Keerthi, your brain 🧠 was working... but Vidya's influence clearly caused some technical issues. 😂"
+            ]
         },
         'vidya': {
-            start: ["Oh, it's YOU. Prepare to lose. 🙄", "Finally, a worthy opponent... wait, it's just Vidya. 😂"],
-            turn: ["Vidya is thinking...", "Are you going to move today or what, Vidya?", "My grandma plays faster than you. 👵"],
-            move: ["Oof, bold move. I'd have played elsewhere. 😬", "Are you sure about that one? 🧐", "I guess that's ONE way to play..."],
-            nearWin: ["Oh wow, you might actually win. Did you cheat? 🤨", "Don't choke now! 📉"],
-            win: ["Beginner's luck. 😒", "Okay, you win. Do you want a medal? 🏅"],
+            start: ["Welcome Vidya! 😈 Let's see whether you're here to win or just press random squares.", "Vidya has entered the game! 😂 Please locate your brain before making the first move. 🧠"],
+            turn: ["Vidya is thinking... This could take a while. 😂", "Come on Vidya, your brain has entered loading mode. ⏳😂", "Vidya, this move better be part of a master plan. 😏"],
+            move: ["Interesting move, Vidya. Very interesting. 👀", "Vidya has a plan. We hope. 😂", "Big brain move detected... probably. 🧠😂"],
+            nearWin: ["Whoa Vidya! Someone is actually taking this seriously. 🔥", "Vidya is getting dangerous now. 😳", "Okay Vidya, we see you! 👀🔥"],
+            block: ["Vidya actually blocked that! Impressive. 👏"],
+            win: ["🎉 VIDYA WINS! 🏆 That wasn't luck... probably. 😏", "Vidya actually won! 😂 Someone document this historic event. 📸"],
             winBot: ["VIDYA BEAT THE BOT! 🏆🔥"],
-            lose: ["As expected. Better luck next lifetime. 💀", "I tried to go easy on you, I really did. 😔"],
-            tie: ["Vidya, can you please stop drinking Magic Moments? Then you might actually focus and win the match. 😜"]
+            lose: ["😂 Vidya lost! Somebody screenshot this historic moment."],
+            tie: ["🤝 It's a tie! Vidya, can you please stop drinking Magic Moments? Then you might actually focus and win the match. 😜"]
         }
     };
 
-    let voiceEnabled = false;
-    let currentDialoguePriority = 0; // 0 = Turn/Move, 1 = Near Win/Start, 2 = Game Over Result
+    let voiceEnabled = localStorage.getItem('voiceEnabled') === 'true';
+    let currentDialoguePriority = 0; // 0=Turn/Move, 1=Near Win/Start, 2=Game Over Result
     let dialogueTimeout;
+    let isDialogueSpeaking = false;
+    let boardLocked = false;
 
-    const dialogueContainer = document.getElementById('dialogue-container');
+    const dialogueContainer = document.getElementById('dialogue-wrapper');
     const dialogueText = document.getElementById('dialogue-text');
     const voiceToggleBtn = document.getElementById('voice-toggle-btn');
 
+    // Init voice toggle UI
+    updateVoiceUI();
+
     voiceToggleBtn.addEventListener('click', () => {
         voiceEnabled = !voiceEnabled;
-        voiceToggleBtn.classList.toggle('active', voiceEnabled);
-        voiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
+        localStorage.setItem('voiceEnabled', voiceEnabled);
+        updateVoiceUI();
         if (voiceEnabled) {
-            voiceToggleBtn.setAttribute('title', 'Voice On');
             speakDialogue("Voice enabled.");
         } else {
-            voiceToggleBtn.setAttribute('title', 'Voice Off');
             if (window.speechSynthesis) window.speechSynthesis.cancel();
         }
     });
 
+    function updateVoiceUI() {
+        voiceToggleBtn.classList.toggle('active', voiceEnabled);
+        voiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
+        voiceToggleBtn.setAttribute('title', voiceEnabled ? 'Voice On' : 'Voice Off');
+    }
+
     function cleanEmojiForSpeech(text) {
         return text.replace(/[က-￿]+/g, '').trim();
     }
+
+    function lockBoard() {
+        boardLocked = true;
+        document.getElementById('board-lock-overlay').style.display = 'block';
+        document.getElementById('dialogue-controls').style.display = 'flex';
+        isDialogueSpeaking = true;
+    }
+
+    function unlockBoard() {
+        boardLocked = false;
+        document.getElementById('board-lock-overlay').style.display = 'none';
+        document.getElementById('dialogue-controls').style.display = 'none';
+        isDialogueSpeaking = false;
+    }
+
+    document.getElementById('skip-voice-btn').addEventListener('click', () => {
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        unlockBoard();
+    });
 
     function speakDialogue(text) {
         if (!voiceEnabled || !window.speechSynthesis) return;
@@ -123,25 +160,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const utterance = new SpeechSynthesisUtterance(cleanEmojiForSpeech(text));
         utterance.rate = 1.0;
         utterance.pitch = 1.1;
+
+        utterance.onstart = () => {
+            lockBoard();
+        };
+
+        utterance.onend = () => {
+            unlockBoard();
+        };
+
+        utterance.onerror = () => {
+            unlockBoard();
+        };
+
         window.speechSynthesis.speak(utterance);
     }
 
-    function showDialogue(playerId, type, priority = 0) {
-        if (priority < currentDialoguePriority) return; // Don't override higher priority messages
+    function triggerGameDialogue(eventName, priority = 0, specificPlayerId = null) {
+        // If there's an existing message with HIGHER priority, do not overwrite it.
+        // Exception: Tie messages and Win messages can overwrite Near Win messages
+        if (priority < currentDialoguePriority && currentDialoguePriority !== 0) {
+            return;
+        }
 
-        let nameRaw = playerId === 'x' ? players.X : players.O;
+        let pName = 'default';
+        let oppName = '';
 
-        // Ensure "Vidya" match works even if they typed "Vidya "
-        if (nameRaw) nameRaw = nameRaw.trim();
-        let nameKey = nameRaw ? nameRaw.toLowerCase() : 'default';
+        if (specificPlayerId) {
+            pName = normalizePlayerName(specificPlayerId === 'x' ? players.X : players.O);
+            oppName = getOpponentName(specificPlayerId);
+        } else {
+            pName = normalizePlayerName(currentPlayer === 'X' ? players.X : players.O);
+            oppName = getOpponentName(currentPlayer.toLowerCase());
+        }
 
-        if (!specialPlayers[nameKey]) {
+        let nameKey = pName;
+        if (!specialPlayers[nameKey] || !specialPlayers[nameKey][eventName]) {
             nameKey = 'default';
         }
 
-        if (specialPlayers[nameKey] && specialPlayers[nameKey][type]) {
-            const options = specialPlayers[nameKey][type];
-            const selectedText = options[Math.floor(Math.random() * options.length)];
+        if (specialPlayers[nameKey] && specialPlayers[nameKey][eventName]) {
+            const options = specialPlayers[nameKey][eventName];
+            let selectedText = options[Math.floor(Math.random() * options.length)];
+
+            if (typeof selectedText === 'function') {
+                selectedText = selectedText(oppName);
+            }
+
+            if (dialogueText.innerText === selectedText) return;
 
             dialogueText.innerText = selectedText;
             dialogueContainer.classList.add('visible');
@@ -150,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             clearTimeout(dialogueTimeout);
 
-            // Reset priority back to 0 after 4 seconds so normal turn messages can resume
             if (priority < 2) {
                 dialogueTimeout = setTimeout(() => {
                     if (currentDialoguePriority < 2) {
@@ -162,14 +227,98 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     const winningConditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],
         [0, 3, 6], [1, 4, 7], [2, 5, 8],
         [0, 4, 8], [2, 4, 6]
     ];
 
-    // Mode Selection logic
+    // Audio Context Setup
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') return;
+
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === 'click') {
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'win') {
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } else if (type === 'draw') {
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    function spawnEmoji(e) {
+        const emoji = document.createElement('div');
+        emoji.className = 'floating-emoji';
+        emoji.innerText = smartEmojis[Math.floor(Math.random() * smartEmojis.length)];
+
+        emoji.style.left = (e.clientX - 15) + 'px';
+        emoji.style.top = (e.clientY - 15) + 'px';
+
+        document.getElementById('emoji-container').appendChild(emoji);
+
+        setTimeout(() => {
+            emoji.remove();
+        }, 2000);
+    }
+
+    function triggerWinCelebration() {
+        var duration = 3000;
+        var end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: ['#ff8c00', '#ff4757', '#0984e3']
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: ['#ff8c00', '#ff4757', '#0984e3']
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    }
+
+    const currentPlayerTurnMsg = () => `${currentPlayer === 'X' ? players.X : players.O}'s turn`;
+    const winningMessage = () => `${currentPlayer === 'X' ? players.X : players.O} Wins!`;
+    const drawMessage = () => `Game Ended in a Draw!`;
+
+    // UI Setup Listeners
     const modeRadios = document.querySelectorAll('input[name="game-mode"]');
     const playerOContainer = document.getElementById('player-o-container');
     const botDifficultyContainer = document.getElementById('bot-difficulty-container');
@@ -186,7 +335,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Setup Game
     startGameBtn.addEventListener('click', () => {
         gameMode = document.querySelector('input[name="game-mode"]:checked').value;
         botDifficulty = document.getElementById('bot-difficulty').value;
@@ -206,16 +354,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         setupModal.style.display = 'none';
         gameContainer.style.display = 'block';
+        gameContainer.style.opacity = '1';
         
-        // Start first audio context on user interaction
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
         resetGame();
 
-        // Trigger start dialogue
+        // Trigger Start Dialogue
         if (gameMode === 'local') {
-            const isVidyaX = players.X.trim().toLowerCase() === 'vidya';
-            const isVidyaO = players.O.trim().toLowerCase() === 'vidya';
+            const isVidyaX = normalizePlayerName(players.X) === 'vidya';
+            const isVidyaO = normalizePlayerName(players.O) === 'vidya';
             if (isVidyaX || isVidyaO) {
                 const combinedMsg = `Welcome ${players.X} & ${players.O}! 🔥`;
                 dialogueText.innerText = combinedMsg;
@@ -228,10 +376,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentDialoguePriority = 0;
                 }, 4000);
             } else {
-                showDialogue('x', 'start', 1);
+                triggerGameDialogue('start', 1, 'x');
             }
         } else {
-            showDialogue('x', 'start', 1);
+            triggerGameDialogue('start', 1, 'x');
         }
     });
 
@@ -240,63 +388,16 @@ document.addEventListener('DOMContentLoaded', () => {
         setupModal.style.display = 'flex';
         scores = { X: 0, O: 0 };
         updateScoreDisplay();
+        dialogueContainer.classList.remove('visible');
+        currentDialoguePriority = 0;
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        unlockBoard();
     });
-
-    const currentPlayerTurnMsg = () => `<span style="color: var(--${currentPlayer.toLowerCase()}-color)">${players[currentPlayer]}'s</span> turn`;
-    const winningMessage = () => `🎉 ${players[currentPlayer]} wins! 🎉`;
-    const drawMessage = () => `🤝 It's a draw! 🤝`;
-
-    function spawnEmoji(e) {
-        const emoji = document.createElement('div');
-        emoji.className = 'floating-emoji';
-        emoji.innerText = smartEmojis[Math.floor(Math.random() * smartEmojis.length)];
-        
-        // Position at click coordinates
-        emoji.style.left = `${e.clientX}px`;
-        emoji.style.top = `${e.clientY}px`;
-        
-        emojiContainer.appendChild(emoji);
-        
-        // Clean up
-        setTimeout(() => {
-            emoji.remove();
-        }, 2000);
-    }
-
-    function triggerWinCelebration() {
-        playSound('win');
-        
-        // Confetti
-        var duration = 3 * 1000;
-        var animationEnd = Date.now() + duration;
-        var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-        function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
-        var interval = setInterval(function() {
-            var timeLeft = animationEnd - Date.now();
-
-            if (timeLeft <= 0) {
-                return clearInterval(interval);
-            }
-
-            var particleCount = 50 * (timeLeft / duration);
-            confetti(Object.assign({}, defaults, { particleCount,
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-            }));
-            confetti(Object.assign({}, defaults, { particleCount,
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-            }));
-        }, 250);
-    }
 
     function updateScoreDisplay() {
         document.getElementById('points-x').innerText = scores.X;
         document.getElementById('points-o').innerText = scores.O;
         
-        // Add subtle animation to scores
         const activeScore = document.getElementById(`score-${currentPlayer.toLowerCase()}`);
         document.querySelectorAll('.score-badge').forEach(b => b.style.transform = 'scale(1)');
         activeScore.style.transform = 'scale(1.1)';
@@ -318,20 +419,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let botMoveTimeout;
+
     function handlePlayerChange() {
         currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
         statusDisplay.innerHTML = currentPlayerTurnMsg();
         updateScoreDisplay();
 
         if (gameMode === 'bot' && currentPlayer === 'O' && gameActive) {
-            setTimeout(makeBotMove, 500); // 500ms delay for better UX
+            // Wait until board is unlocked to make a move
+            const checkAndMove = () => {
+                if (boardLocked) {
+                    botMoveTimeout = setTimeout(checkAndMove, 200);
+                } else {
+                    botMoveTimeout = setTimeout(makeBotMove, 500);
+                }
+            };
+            checkAndMove();
         } else if (gameActive) {
-            // Player's turn to move
-            if (Math.random() < 0.4) { // 40% chance to say a turn joke
-                showDialogue(currentPlayer.toLowerCase(), 'turn', 0);
+            if (Math.random() < 0.4) {
+                triggerGameDialogue('turn', 0, currentPlayer.toLowerCase());
             } else if (Math.random() < 0.3) {
-                // Taunt the opponent
-                showDialogue(currentPlayer === 'X' ? 'o' : 'x', 'move', 0);
+                triggerGameDialogue('move', 0, currentPlayer === 'X' ? 'o' : 'x');
             }
         }
     }
@@ -347,18 +456,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let b = gameState[winCondition[1]];
             let c = gameState[winCondition[2]];
             
-            // Check for near win
             const arr = [a, b, c];
             const pCount = arr.filter(v => v === currentPlayer).length;
             const eCount = arr.filter(v => v === '').length;
             if (pCount === 2 && eCount === 1) {
                 nearWin = true;
             }
-
-            if (a === '' || b === '' || c === '') {
-                continue;
-            }
             
+            if (a === '' || b === '' || c === '') continue;
             if (a === b && b === c) {
                 roundWon = true;
                 winningCells = winCondition;
@@ -367,7 +472,105 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (nearWin && !roundWon && gameActive) {
-            showDialogue(currentPlayer.toLowerCase(), 'nearWin', 1);
+            triggerGameDialogue('nearWin', 1, currentPlayer.toLowerCase());
+        }
+
+        let heroIntervention = false;
+
+        if (roundWon) {
+            const loser = currentPlayer === 'X' ? 'O' : 'X';
+            const loserName = normalizePlayerName(loser === 'X' ? players.X : players.O);
+            const winnerName = normalizePlayerName(currentPlayer === 'X' ? players.X : players.O);
+
+            // Sravan Hero Mode Intervention logic
+            if (loserName === 'sravan' && winnerName !== 'sravan') {
+                heroIntervention = true;
+                roundWon = false; // Cancel the opponent's win
+
+                const oldState = [...gameState];
+
+                // We need to build a valid winning combination for Sravan ('loser' is Sravan's mark)
+                // Find the winning condition that requires the least amount of board disruption
+                let bestCondition = winningConditions[0];
+                let maxSravanPiecesInCondition = -1;
+
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const condition = winningConditions[i];
+                    let sravanPieces = 0;
+                    condition.forEach(idx => {
+                        if (oldState[idx] === loser) sravanPieces++;
+                    });
+
+                    // Don't choose the opponent's winning line
+                    const isOpponentWinLine = condition[0] === winningCells[0] && condition[1] === winningCells[1] && condition[2] === winningCells[2];
+
+                    if (!isOpponentWinLine && sravanPieces > maxSravanPiecesInCondition) {
+                        maxSravanPiecesInCondition = sravanPieces;
+                        bestCondition = condition;
+                    }
+                }
+
+                // Now rebuild the board using the best condition
+                // 1. Count original pieces BEFORE clearing anything
+                let sravanPiecesRemaining = oldState.filter(val => val === loser).length;
+                let oppPiecesRemaining = oldState.filter(val => val === currentPlayer).length;
+
+                // 2. Clear visual board and state
+                for (let j = 0; j < 9; j++) {
+                    gameState[j] = '';
+                    cells[j].innerHTML = '';
+                    cells[j].className = 'cell';
+                }
+
+                // 3. Assign Sravan's winning line first
+                bestCondition.forEach(idx => {
+                    gameState[idx] = loser;
+                    cells[idx].innerHTML = loser;
+                    cells[idx].className = `cell ${loser.toLowerCase()}`;
+                    sravanPiecesRemaining--;
+                });
+
+                // 4. Fill in the rest of the board, trying to keep original pieces where possible
+                for (let j = 0; j < 9; j++) {
+                    if (gameState[j] === '') {
+                        if (oldState[j] === currentPlayer && oppPiecesRemaining > 0) {
+                            gameState[j] = currentPlayer;
+                            cells[j].innerHTML = currentPlayer;
+                            cells[j].className = `cell ${currentPlayer.toLowerCase()}`;
+                            oppPiecesRemaining--;
+                        } else if (oldState[j] === loser && sravanPiecesRemaining > 0) {
+                            gameState[j] = loser;
+                            cells[j].innerHTML = loser;
+                            cells[j].className = `cell ${loser.toLowerCase()}`;
+                            sravanPiecesRemaining--;
+                        }
+                    }
+                }
+
+                // If we still have pieces left (because their original spots were overwritten by the win line),
+                // put them in the first available empty spots.
+                for (let j = 0; j < 9; j++) {
+                    if (gameState[j] === '') {
+                        if (oppPiecesRemaining > 0) {
+                            gameState[j] = currentPlayer;
+                            cells[j].innerHTML = currentPlayer;
+                            cells[j].className = `cell ${currentPlayer.toLowerCase()}`;
+                            oppPiecesRemaining--;
+                        } else if (sravanPiecesRemaining > 0) {
+                            gameState[j] = loser;
+                            cells[j].innerHTML = loser;
+                            cells[j].className = `cell ${loser.toLowerCase()}`;
+                            sravanPiecesRemaining--;
+                        }
+                    }
+                }
+
+                winningCells = bestCondition;
+                currentPlayer = loser; // Transfer turn state to Sravan so Sravan is declared winner
+                roundWon = true;
+
+                triggerGameDialogue('heroIntervention', 2, loser.toLowerCase());
+            }
         }
 
         if (roundWon) {
@@ -386,19 +589,23 @@ document.addEventListener('DOMContentLoaded', () => {
             
             triggerWinCelebration();
 
-            if (gameMode === 'bot' && currentPlayer === 'X' && players.X.trim().toLowerCase() === 'vidya') {
-                showDialogue('x', 'winBot', 2);
-            } else {
-                showDialogue(currentPlayer.toLowerCase(), 'win', 2);
-                setTimeout(() => showDialogue(currentPlayer === 'X' ? 'o' : 'x', 'lose', 2), 3000); // delay loser quote
+            if (gameMode === 'bot' && currentPlayer === 'X' && normalizePlayerName(players.X) === 'vidya') {
+                triggerGameDialogue('winBot', 2, 'x');
+            } else if (!heroIntervention) {
+                triggerGameDialogue('win', 2, currentPlayer.toLowerCase());
+                setTimeout(() => triggerGameDialogue('lose', 2, currentPlayer === 'X' ? 'o' : 'x'), 4000);
             }
 
             const pName = players[currentPlayer];
             let dialogueMsg = '';
-            if (currentDialoguePriority === 2 && dialogueContainer.classList.contains('visible')) {
+            if (currentDialoguePriority >= 1 && dialogueContainer.classList.contains('visible')) {
                 dialogueMsg = `<br/><br/><i>"${dialogueText.innerText}"</i>`;
             }
-            showResultModal("🏆", `${pName} WINS!`, `Outstanding move.` + dialogueMsg);
+
+            const title = heroIntervention ? "🦸 HERO WINS!" : `${pName} WINS!`;
+            const icon = heroIntervention ? "⚡" : "🏆";
+
+            showResultModal(icon, title, `Outstanding move.` + dialogueMsg);
 
             return;
         }
@@ -412,16 +619,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gameMode === 'bot' && botDifficulty === 'hard') hardGamesPlayed++;
             playSound('draw');
 
-            // Prioritize Vidya's tie message
-            if (players.X.trim().toLowerCase() === 'vidya') {
-                showDialogue('x', 'tie', 2);
-            } else if (players.O.trim().toLowerCase() === 'vidya') {
-                showDialogue('o', 'tie', 2);
+            if (normalizePlayerName(players.X) === 'sravan') {
+                triggerGameDialogue('tie', 2, 'x');
+            } else if (normalizePlayerName(players.O) === 'sravan') {
+                triggerGameDialogue('tie', 2, 'o');
+            } else if (normalizePlayerName(players.X) === 'vidya') {
+                triggerGameDialogue('tie', 2, 'x');
+            } else if (normalizePlayerName(players.O) === 'vidya') {
+                triggerGameDialogue('tie', 2, 'o');
+            } else if (normalizePlayerName(players.X) === 'keerthi') {
+                triggerGameDialogue('tie', 2, 'x');
+            } else if (normalizePlayerName(players.O) === 'keerthi') {
+                triggerGameDialogue('tie', 2, 'o');
             } else {
-                showDialogue('x', 'tie', 2);
+                triggerGameDialogue('tie', 2, 'x');
             }
+
             let dialogueMsg = '';
-            if (currentDialoguePriority === 2 && dialogueContainer.classList.contains('visible')) {
+            if (currentDialoguePriority >= 1 && dialogueContainer.classList.contains('visible')) {
                 dialogueMsg = `<br/><br/><i>"${dialogueText.innerText}"</i>`;
             }
             showResultModal("🤝", "IT'S A TIE!", dialogueMsg);
@@ -510,12 +725,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function makeBotMove() {
         if (!gameActive) return;
 
-        // Implement trick/scam mechanics
         if (trickActiveThisGame && !trickExecuted && firstUserMoveIndex !== -1) {
-            // Count bot moves to trigger trick on the 2nd bot move
             const botMoves = gameState.filter(cell => cell === 'O').length;
             if (botMoves === 1) {
-                // Swap the user's first move (X) to bot's move (O)
                 gameState[firstUserMoveIndex] = 'O';
                 cells[firstUserMoveIndex].innerHTML = 'O';
                 cells[firstUserMoveIndex].classList.remove('x');
@@ -532,10 +744,8 @@ document.addEventListener('DOMContentLoaded', () => {
             moveIndex = getBestMove([...gameState], 'O').index;
         } else if (botDifficulty === 'hard') {
             if (trickExecuted) {
-                // If we scammed, we better play the optimal move to win
                 moveIndex = getBestMove([...gameState], 'O').index;
             } else {
-                // Mix of random and best move (e.g. 50% random, 50% best)
                 if (Math.random() < 0.5) {
                     moveIndex = makeRandomMove();
                 } else {
@@ -546,7 +756,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (moveIndex !== -1) {
             const cell = cells[moveIndex];
-            // Mock event for bot
             const mockEvent = {
                 clientX: cell.getBoundingClientRect().left + cell.getBoundingClientRect().width / 2,
                 clientY: cell.getBoundingClientRect().top + cell.getBoundingClientRect().height / 2
@@ -557,8 +766,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleCellClick(clickedCellEvent) {
+        if (boardLocked) {
+            return;
+        }
         if (gameMode === 'bot' && currentPlayer === 'O') {
-            return; // Ignore clicks while bot is thinking or playing
+            return;
         }
 
         const clickedCell = clickedCellEvent.target;
@@ -586,7 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultTitle.innerText = title;
             resultMessage.innerHTML = message;
             resultModal.style.display = 'flex';
-        }, 1500); // Wait for animations/confetti
+        }, 1500);
     }
 
     rematchBtn.addEventListener('click', () => {
@@ -602,6 +814,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setupModal.style.display = 'flex';
         dialogueContainer.classList.remove('visible');
         currentDialoguePriority = 0;
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        unlockBoard();
     });
 
     function resetGame() {
@@ -618,10 +832,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateScoreDisplay();
 
-        // Evaluate trick mechanics
         trickActiveThisGame = false;
         trickExecuted = false;
         firstUserMoveIndex = -1;
+        clearTimeout(botMoveTimeout);
 
         if (gameMode === 'bot') {
             if (botDifficulty === 'extreme' && lastGameResult === 'draw') {
