@@ -62,6 +62,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const smartEmojis = ['🧠', '🔥', '✨', '🎯', '⚡', '🌟', '🚀', '😎'];
 
+    // --- DIALOGUE & VOICE ENGINE ---
+    const specialPlayers = {
+        'vidya': {
+            start: ["Oh, it's YOU. Prepare to lose. 🙄", "Finally, a worthy opponent... wait, it's just Vidya. 😂"],
+            turn: ["Thinking... thinking... nope, still nothing in there. 🧠💤", "Are you going to move today or what?", "My grandma plays faster than you. 👵"],
+            move: ["Oof, bold move. I'd have played elsewhere. 😬", "Are you sure about that one? 🧐", "I guess that's ONE way to play..."],
+            nearWin: ["Oh wow, you might actually win. Did you cheat? 🤨", "Don't choke now! 📉"],
+            win: ["Beginner's luck. 😒", "Okay, you win. Do you want a medal? 🏅"],
+            lose: ["As expected. Better luck next lifetime. 💀", "I tried to go easy on you, I really did. 😔"],
+            tie: ["A tie? You're equally as bad as me. 🤝", "Boring. Let's play again so I can win. 🥱"]
+        }
+    };
+
+    let voiceEnabled = false;
+    let currentDialoguePriority = 0; // 0 = Turn/Move, 1 = Near Win/Start, 2 = Game Over Result
+
+    const dialogueContainer = document.getElementById('dialogue-container');
+    const dialogueText = document.getElementById('dialogue-text');
+    const voiceToggleBtn = document.getElementById('voice-toggle-btn');
+
+    voiceToggleBtn.addEventListener('click', () => {
+        voiceEnabled = !voiceEnabled;
+        voiceToggleBtn.classList.toggle('active', voiceEnabled);
+        voiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
+        if (voiceEnabled) {
+            voiceToggleBtn.setAttribute('title', 'Voice On');
+            speakDialogue("Voice enabled.");
+        } else {
+            voiceToggleBtn.setAttribute('title', 'Voice Off');
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+        }
+    });
+
+    function cleanEmojiForSpeech(text) {
+        return text.replace(/[က-￿]+/g, '').trim();
+    }
+
+    function speakDialogue(text) {
+        if (!voiceEnabled || !window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanEmojiForSpeech(text));
+        utterance.rate = 1.0;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function showDialogue(playerId, type, priority = 0) {
+        if (priority < currentDialoguePriority) return; // Don't override higher priority messages
+
+        let nameRaw = document.getElementById(`player-${playerId}`).value;
+        if (gameMode === 'bot' && playerId === 'o') {
+            nameRaw = 'bot';
+        }
+
+        if (!nameRaw) return;
+        const nameKey = nameRaw.trim().toLowerCase();
+
+        if (specialPlayers[nameKey] && specialPlayers[nameKey][type]) {
+            const options = specialPlayers[nameKey][type];
+            const selectedText = options[Math.floor(Math.random() * options.length)];
+
+            dialogueText.innerText = selectedText;
+            dialogueContainer.classList.add('visible');
+            currentDialoguePriority = priority;
+            speakDialogue(selectedText);
+
+            // Auto hide after 5 seconds if it's a low priority message
+            if (priority === 0) {
+                setTimeout(() => {
+                    if (currentDialoguePriority === 0) {
+                        dialogueContainer.classList.remove('visible');
+                    }
+                }, 5000);
+            }
+        }
+    }
+
+
     const winningConditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],
         [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -367,6 +445,38 @@ document.addEventListener('DOMContentLoaded', () => {
         handleCellPlayed(clickedCell, clickedCellIndex, clickedCellEvent);
         handleResultValidation();
     }
+
+    // Result Modal Logic
+    const resultModal = document.getElementById('result-modal');
+    const resultTitle = document.getElementById('result-title');
+    const resultMessage = document.getElementById('result-message');
+    const resultIcon = document.getElementById('result-icon');
+    const rematchBtn = document.getElementById('rematch-btn');
+    const homeBtn = document.getElementById('home-btn');
+
+    function showResultModal(icon, title, message) {
+        setTimeout(() => {
+            resultIcon.innerText = icon;
+            resultTitle.innerText = title;
+            resultMessage.innerHTML = message;
+            resultModal.style.display = 'flex';
+        }, 1500); // Wait for animations/confetti
+    }
+
+    rematchBtn.addEventListener('click', () => {
+        resultModal.style.display = 'none';
+        dialogueContainer.classList.remove('visible');
+        currentDialoguePriority = 0;
+        resetGame();
+    });
+
+    homeBtn.addEventListener('click', () => {
+        resultModal.style.display = 'none';
+        gameContainer.style.display = 'none';
+        setupModal.style.display = 'flex';
+        dialogueContainer.classList.remove('visible');
+        currentDialoguePriority = 0;
+    });
 
     function resetGame() {
         gameActive = true;
