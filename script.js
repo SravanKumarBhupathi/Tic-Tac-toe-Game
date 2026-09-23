@@ -17,6 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameMode = 'local';
     let botDifficulty = 'easy';
 
+    // Trick / Fun mechanics state
+    let lastGameResult = null; // 'X', 'O', or 'draw'
+    let hardGamesPlayed = 0;
+    let trickActiveThisGame = false;
+    let firstUserMoveIndex = -1;
+    let trickExecuted = false;
+
     const smartEmojis = ['🧠', '🔥', '✨', '🎯', '⚡', '🌟', '🚀', '😎'];
 
     // --- DIALOGUE & VOICE ENGINE ---
@@ -401,8 +408,15 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState[clickedCellIndex] = currentPlayer;
         clickedCell.innerHTML = currentPlayer;
         clickedCell.classList.add(currentPlayer.toLowerCase());
+
+        if (currentPlayer === 'X' && firstUserMoveIndex === -1) {
+            firstUserMoveIndex = clickedCellIndex;
+        }
+
         playSound('click');
-        spawnEmoji(e);
+        if (e && e.clientX) {
+            spawnEmoji(e);
+        }
     }
 
     let botMoveTimeout;
@@ -563,6 +577,8 @@ document.addEventListener('DOMContentLoaded', () => {
             statusDisplay.innerHTML = winningMessage();
             statusDisplay.style.color = `var(--${currentPlayer.toLowerCase()}-color)`;
             gameActive = false;
+            lastGameResult = currentPlayer;
+            if (gameMode === 'bot' && botDifficulty === 'hard') hardGamesPlayed++;
             
             scores[currentPlayer]++;
             updateScoreDisplay();
@@ -599,6 +615,8 @@ document.addEventListener('DOMContentLoaded', () => {
             statusDisplay.innerHTML = drawMessage();
             statusDisplay.style.color = 'var(--text-color)';
             gameActive = false;
+            lastGameResult = 'draw';
+            if (gameMode === 'bot' && botDifficulty === 'hard') hardGamesPlayed++;
             playSound('draw');
 
             if (normalizePlayerName(players.X) === 'sravan') {
@@ -707,6 +725,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function makeBotMove() {
         if (!gameActive) return;
 
+        if (trickActiveThisGame && !trickExecuted && firstUserMoveIndex !== -1) {
+            const botMoves = gameState.filter(cell => cell === 'O').length;
+            if (botMoves === 1) {
+                gameState[firstUserMoveIndex] = 'O';
+                cells[firstUserMoveIndex].innerHTML = 'O';
+                cells[firstUserMoveIndex].classList.remove('x');
+                cells[firstUserMoveIndex].classList.add('o');
+                trickExecuted = true;
+            }
+        }
+
         let moveIndex = -1;
 
         if (botDifficulty === 'easy') {
@@ -714,11 +743,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (botDifficulty === 'extreme') {
             moveIndex = getBestMove([...gameState], 'O').index;
         } else if (botDifficulty === 'hard') {
-            // Mix of random and best move (e.g. 50% random, 50% best)
-            if (Math.random() < 0.5) {
-                moveIndex = makeRandomMove();
-            } else {
+            if (trickExecuted) {
                 moveIndex = getBestMove([...gameState], 'O').index;
+            } else {
+                if (Math.random() < 0.5) {
+                    moveIndex = makeRandomMove();
+                } else {
+                    moveIndex = getBestMove([...gameState], 'O').index;
+                }
             }
         }
 
@@ -799,6 +831,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         updateScoreDisplay();
+
+        trickActiveThisGame = false;
+        trickExecuted = false;
+        firstUserMoveIndex = -1;
+        clearTimeout(botMoveTimeout);
+
+        if (gameMode === 'bot') {
+            if (botDifficulty === 'extreme' && lastGameResult === 'draw') {
+                trickActiveThisGame = true;
+            } else if (botDifficulty === 'hard') {
+                if (lastGameResult === 'X' || (hardGamesPlayed > 0 && hardGamesPlayed % 2 === 0)) {
+                    trickActiveThisGame = true;
+                }
+            }
+        }
     }
 
     cells.forEach(cell => cell.addEventListener('click', handleCellClick));
