@@ -39,6 +39,19 @@
                     <option value="extreme">Extreme</option>
                 </select>
             </div>
+
+            <div class="input-group">
+                <label for="voice-select">Voice Settings:</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="setup-voice-toggle" class="icon-btn" type="button" aria-label="Toggle Voice" title="Voice On">
+                        <span class="icon">🔊</span>
+                    </button>
+                    <select id="voice-select" style="flex: 1; padding: 0.8rem 1rem; border: 2px solid #eee; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 0.9rem;">
+                        <option value="">Loading voices...</option>
+                    </select>
+                </div>
+            </div>
+
             <button id="start-game-btn" class="primary-btn">Start Game</button>
         </div>
     </div>
@@ -46,28 +59,25 @@
     <!-- Main Game Container -->
     <div class="container" id="game-container" style="display: none;">
         <div class="header">
-
-
-        <div class="header-controls">
-            <button id="voice-toggle-btn" class="icon-btn" aria-label="Toggle Voice" title="Voice Off">
-                <span class="icon">🔇</span>
-            </button>
-        </div>
-
-        <div class="dialogue-wrapper" id="dialogue-wrapper">
-            <div class="dialogue-header">😈 GAME COMMENTARY</div>
-            <div class="dialogue-container" id="dialogue-container">
-                <div class="dialogue-text" id="dialogue-text"></div>
+            <div class="header-controls">
+                <button id="voice-toggle-btn" class="icon-btn" aria-label="Toggle Voice" title="Voice Off">
+                    <span class="icon">🔇</span>
+                </button>
             </div>
-            <div class="dialogue-controls" id="dialogue-controls" style="display: none;">
-                <span class="speaking-indicator">🔊 Speaking...</span>
-                <button id="skip-voice-btn" class="skip-btn">SKIP ▶</button>
+
+            <div class="dialogue-wrapper" id="dialogue-wrapper">
+                <div class="dialogue-header">😈 GAME COMMENTARY</div>
+                <div class="dialogue-container" id="dialogue-container">
+                    <div class="dialogue-text" id="dialogue-text"></div>
+                </div>
+                <div class="dialogue-controls" id="dialogue-controls" style="display: none;">
+                    <span class="speaking-indicator">🔊 Speaking...</span>
+                    <button id="skip-voice-btn" class="skip-btn">SKIP ▶</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Board Lock Overlay -->
-        <div id="board-lock-overlay" class="board-lock-overlay"></div>
-
+            <!-- Board Lock Overlay -->
+            <div id="board-lock-overlay" class="board-lock-overlay"></div>
             <h1>Tic Tac Toe</h1>
             <div class="scores">
                 <div class="score-badge" id="score-x">
@@ -93,26 +103,22 @@
             <div class="cell" data-index="8"></div>
         </div>
         
-        <div class="controls">
+        <div class="controls" id="game-controls">
             <button class="secondary-btn" id="reset-btn">Restart Match</button>
             <button class="secondary-btn" id="change-players-btn">Change Players</button>
         </div>
-    </div>
 
-
-
-
-    <!-- Result Modal -->
-    <div id="result-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div id="result-icon" style="font-size: 4rem; margin-bottom: 1rem;">🏆</div>
+        <!-- Inline Result Panel (Doesn't cover board) -->
+        <div id="result-panel" class="result-panel" style="display: none;">
+            <div id="result-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">🏆</div>
             <h2 id="result-title">Player X WINS!</h2>
-            <p id="result-message" style="margin-bottom: 2rem; font-size: 1.1rem; color: #495057;"></p>
-            <div style="display: flex; gap: 1rem;">
-                <button id="rematch-btn" class="primary-btn">🔄 Rematch</button>
-                <button id="home-btn" class="secondary-btn">🏠 Home</button>
+            <p id="result-message" style="margin-bottom: 1rem; font-size: 1rem; color: #495057;"></p>
+            <div id="result-actions" style="display: none; gap: 1rem; justify-content: center; margin-top: 1rem;">
+                <button id="rematch-btn" class="primary-btn" style="padding: 10px 15px;">🔄 Rematch</button>
+                <button id="home-btn" class="secondary-btn" style="padding: 10px 15px;">🏠 Home</button>
             </div>
         </div>
+
     </div>
 
     <!-- Container for floating emojis -->

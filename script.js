@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameContainer = document.getElementById('game-container');
     const startGameBtn = document.getElementById('start-game-btn');
     const changePlayersBtn = document.getElementById('change-players-btn');
+    const gameControls = document.getElementById('game-controls');
 
     let gameActive = false;
     let currentPlayer = 'X';
@@ -17,8 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameMode = 'local';
     let botDifficulty = 'easy';
 
-    // Trick / Fun mechanics state
-    let lastGameResult = null; // 'X', 'O', or 'draw'
+    let lastGameResult = null;
     let hardGamesPlayed = 0;
     let trickActiveThisGame = false;
     let firstUserMoveIndex = -1;
@@ -42,94 +42,161 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const specialPlayers = {
         'default': {
-            start: ["Alright... let's see who regrets starting this game first. 😂", "Game started. Friendship status: potentially unstable. 😈"],
-            turn: ["Still thinking? It's only X and O. 😭"],
-            move: ["Interesting choice... questionable, but interesting. 😂", "The board definitely did not deserve that move. 😭", "Okay... that was actually smart. 👀", "Wait... you actually know how to play? 😳"],
-            nearWin: ["OHHH! Someone is getting dangerous. 🔥", "One more mistake and it's over. 😈"],
-            block: ["Nice save! 👀", "You just saved yourself from embarrassment. 😂"],
-            win: ["🏆 Victory! Someone's confidence just increased by 200%. 😂"],
-            lose: ["GG! 😂 Maybe pretend the Wi-Fi disconnected."],
-            tie: ["🤝 It's a tie! Nobody won. Nobody lost. Perfect excuse for a rematch. 😂"]
+            start: ["Welcome to Tic-Tac-Toe! 😎 Let's see who regrets starting this game first. 😂"],
+            win: [(winner) => `Congratulations, ${winner}! 🏆 You actually knew what you were doing. 😂`],
+            lose: ["GG! 😂 Maybe blame the board and try again."],
+            tie: ["It's a tie! 🤝 Nobody won, nobody lost. Perfect excuse for a rematch. 😂"]
         },
         'sravan': {
-            start: ["THE HERO HAS ENTERED THE GAME! 🦸🔥", "Everyone remain calm. Sravan is cooking. 🔥😎", "Sravan has entered. This game just became unfair. 😂", "The Hero has arrived. Everyone else may now panic. 😎"],
-            turn: ["Sravan is calculating... or pretending to. 😎"],
-            move: ["The Hero has made his move. 😎", "That wasn't a move. That was a warning. 😂", "Hero move detected. 🦸🔥"],
-            nearWin: ["The Hero is about to strike. ⚡"],
-            block: ["Heroic block! 🛡️"],
-            heroIntervention: ["🚨 HERO MODE ACTIVATED! 🚨 Relax everyone. The Hero cannot lose. 😎", "The universe has corrected the mistake. 😂", "Nice try. But Sravan is the Hero. 🦸"],
+            start: [
+                "HAHA! You really thought you could defeat the developer? Sorry bro... NOT POSSIBLE! 😜🤟",
+                "You came here to defeat Sravan? Bro, you entered the wrong game. 😂🦸",
+                "Nice try! But the Hero has developer privileges. 😎🤟",
+                "You almost had him... almost. Then the developer remembered who Sravan is. 😂",
+                "Plot twist! Sravan was never supposed to lose. 😜🔥",
+                "Opponent strategy detected... and rejected by the developer. 🤣",
+                "You played well. Unfortunately, this game has a Sravan-shaped problem. 😜",
+                "The Hero has spoken. The scoreboard has no choice. 🦸🔥"
+            ],
+            heroIntervention: [
+                "HAHA! YOU TRIED TO DEFEAT THE DEVELOPER?! SORRY BRO... NOT POSSIBLE! 😜🤟",
+                "🚨 HERO MODE ACTIVATED 🚨 Relax everyone. The Hero cannot lose. 😎",
+                "The universe has corrected the mistake. 😂 Nice try. But Sravan is the Hero. 🦸"
+            ],
             win: ["SRAVAN WINS! 🦸🔥 As expected. The Hero has saved the day again.", "SRAVAN WINS! 😎 Did anyone seriously expect another result?", "Victory achieved. The Hero remains undefeated. 🦸🏆"],
-            lose: ["Wait, the Hero lost? This is a glitch in the matrix."],
             tie: ["It's a tie! Even the Hero decided to be generous. 😂", "Sravan didn't lose. That's what matters. 😎"]
         },
         'keerthi': {
             start: [
-                (opp) => `Ohhh wow! Keerthi entered! 😂 ${opp}, just give the game to Keerthi and go somewhere else.`,
-                (opp) => `Ohhh wow! Keerthi is here! 😳 ${opp}, save yourself some embarrassment and go somewhere else. 😂`,
-                (opp) => `Keerthi entered the game! 🔥 ${opp}, I suggest you reconsider your life choices. 😂`
+                (opp) => `Ohhh wow! Keerthi entered! 😂 ${opp}, just give the game to Keerthi and go somewhere else.`
             ],
-            turn: ["Keerthi is contemplating the universe..."],
-            move: ["Keerthi places a mark. Watch and learn."],
-            nearWin: ["Keerthi is closing in!"],
-            block: ["Keerthi denies you!"],
             win: [
-                (opp) => `${opp}, I told you before the game started. You should've gone somewhere else. 😂`,
-                (opp) => `Keerthi wins! 🏆 ${opp}, next time listen when I give you advice. 😂`,
-                (opp) => `Keerthi wins! 😎 ${opp} was warned. ${opp} ignored the warning. ${opp} suffered. 😂`
+                (opp) => `${opp}, I told you before the game started. You should've gone somewhere else. 😂`
             ],
             lose: [
-                "So sad, Keerthi! 😂 Maybe it's time to change your friend circle. Vidya's brainless energy is clearly contagious. Be careful next time! 😜",
-                "Keerthi lost! 😭😂 I think you need a new strategy... and possibly a new friend circle. 😜",
-                "Oh no Keerthi! 😂 Your brain 🧠 was clearly affected by too much Vidya influence. Recovery recommended before the next match. 😜"
+                "So sad, Keerthi! 😂 Maybe it's time to change your friend circle. Vidya's brainless energy is clearly contagious. Be careful next time! 😜"
             ],
             tie: [
-                "It's a tie! 🤝 Keerthi, you definitely have the brain 🧠... but after travelling with Vidya, some of that brainpower seems to have gone missing. 😂😜",
-                "It's a tie! 😂 Keerthi has the brain 🧠, but travelling with Vidya seems to have put it into airplane mode. ✈️🧠",
-                "Draw game! 🤝 Keerthi, your brain 🧠 was working... but Vidya's influence clearly caused some technical issues. 😂"
+                "It's a tie! 🤝 Keerthi, you definitely have the brain 🧠... but after travelling with Vidya, some of that brainpower seems to have gone missing. 😂😜"
             ]
         },
         'vidya': {
-            start: ["Welcome Vidya! 😈 Let's see whether you're here to win or just press random squares.", "Vidya has entered the game! 😂 Please locate your brain before making the first move. 🧠"],
-            turn: ["Vidya is thinking... This could take a while. 😂", "Come on Vidya, your brain has entered loading mode. ⏳😂", "Vidya, this move better be part of a master plan. 😏"],
-            move: ["Interesting move, Vidya. Very interesting. 👀", "Vidya has a plan. We hope. 😂", "Big brain move detected... probably. 🧠😂"],
-            nearWin: ["Whoa Vidya! Someone is actually taking this seriously. 🔥", "Vidya is getting dangerous now. 😳", "Okay Vidya, we see you! 👀🔥"],
-            block: ["Vidya actually blocked that! Impressive. 👏"],
-            win: ["🎉 VIDYA WINS! 🏆 That wasn't luck... probably. 😏", "Vidya actually won! 😂 Someone document this historic event. 📸"],
-            winBot: ["VIDYA BEAT THE BOT! 🏆🔥"],
+            start: ["Welcome Vidya! 😈 Let's see if that brain is ready today.", "Vidya has entered the game! 😂 Please locate your brain before making the first move. 🧠"],
+            win: ["VIDYA WINS! 🏆 Okay... that was actually impressive. 😂"],
             lose: ["😂 Vidya lost! Somebody screenshot this historic moment."],
             tie: ["🤝 It's a tie! Vidya, can you please stop drinking Magic Moments? Then you might actually focus and win the match. 😜"]
         }
     };
 
-    let voiceEnabled = localStorage.getItem('voiceEnabled') === 'true';
-    let currentDialoguePriority = 0; // 0=Turn/Move, 1=Near Win/Start, 2=Game Over Result
+    // Special Matchups mapping
+    const specialMatchups = {
+        'sravan_vidya': {
+            start: "Brainless Vidya is challenging the developer Sravan? 😂 Okay... let's start.",
+            sravan_win: "I told you, brainless Vidya! You really thought Sravan would lose? 😂🦸"
+        },
+        'keerthi_sravan': {
+            start: "Keerthi, it's not easy playing with Sravan. So think hard and move smartly. 🧠😜",
+            sravan_win: "You're Vidya's friend, right? 😂 Then moving smartly was never going to be easy. 🧠😜 Better luck next time!"
+        },
+        'keerthi_vidya': {
+            start: "Ohhh no... Vidya and Keerthi are playing each other. 😂 Let's see which brain arrives first.",
+            tie: "It's a tie! 🤣 Keerthi brought the brain 🧠, Vidya brought the Magic Moments... and somehow nobody won."
+        }
+    };
+
+    let voiceEnabled = localStorage.getItem('voiceEnabled') !== 'false'; // Default ON
+    let selectedVoiceURI = localStorage.getItem('selectedVoiceURI') || '';
+    let currentDialoguePriority = 0; // 0=None, 1=Start, 2=Matchup, 3=HeroIntervention, 4=Result
     let dialogueTimeout;
     let isDialogueSpeaking = false;
     let boardLocked = false;
+    let botMoveTimeout;
+    let availableVoices = [];
 
     const dialogueContainer = document.getElementById('dialogue-wrapper');
     const dialogueText = document.getElementById('dialogue-text');
-    const voiceToggleBtn = document.getElementById('voice-toggle-btn');
 
-    // Init voice toggle UI
-    updateVoiceUI();
+    // Voice Setup UI
+    const voiceToggleBtn = document.getElementById('setup-voice-toggle');
+    const gameVoiceToggleBtn = document.getElementById('voice-toggle-btn');
+    const voiceSelect = document.getElementById('voice-select');
 
-    voiceToggleBtn.addEventListener('click', () => {
-        voiceEnabled = !voiceEnabled;
-        localStorage.setItem('voiceEnabled', voiceEnabled);
-        updateVoiceUI();
-        if (voiceEnabled) {
-            speakDialogue("Voice enabled.");
-        } else {
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
+    function populateVoiceList() {
+        if (!window.speechSynthesis) return;
+        availableVoices = speechSynthesis.getVoices();
+        if (availableVoices.length === 0) return;
+
+        voiceSelect.innerHTML = '';
+
+        // Try to find a good English Male voice by default if none selected
+        let defaultVoice = availableVoices.find(v => v.lang.startsWith('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Guy') || v.name.includes('Arthur')));
+        if (!defaultVoice) defaultVoice = availableVoices.find(v => v.lang.startsWith('en'));
+        if (!defaultVoice) defaultVoice = availableVoices[0];
+
+        let foundSelected = false;
+
+        availableVoices.forEach((voice) => {
+            if (voice.lang.startsWith('en')) {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = voice.voiceURI;
+
+                if (selectedVoiceURI === voice.voiceURI) {
+                    option.selected = true;
+                    foundSelected = true;
+                }
+
+                voiceSelect.appendChild(option);
+            }
+        });
+
+        if (!foundSelected && defaultVoice) {
+            selectedVoiceURI = defaultVoice.voiceURI;
+            voiceSelect.value = selectedVoiceURI;
+            localStorage.setItem('selectedVoiceURI', selectedVoiceURI);
         }
+    }
+
+    if (window.speechSynthesis) {
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+    }
+
+    voiceSelect.addEventListener('change', (e) => {
+        selectedVoiceURI = e.target.value;
+        localStorage.setItem('selectedVoiceURI', selectedVoiceURI);
+        speakDialogue("Voice selected.");
     });
 
     function updateVoiceUI() {
-        voiceToggleBtn.classList.toggle('active', voiceEnabled);
-        voiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
-        voiceToggleBtn.setAttribute('title', voiceEnabled ? 'Voice On' : 'Voice Off');
+        if (voiceToggleBtn) {
+            voiceToggleBtn.classList.toggle('active', voiceEnabled);
+            voiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
+            voiceToggleBtn.setAttribute('title', voiceEnabled ? 'Voice On' : 'Voice Off');
+            voiceSelect.disabled = !voiceEnabled;
+        }
+        if (gameVoiceToggleBtn) {
+            gameVoiceToggleBtn.classList.toggle('active', voiceEnabled);
+            gameVoiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
+            gameVoiceToggleBtn.setAttribute('title', voiceEnabled ? 'Voice On' : 'Voice Off');
+        }
     }
+
+    [voiceToggleBtn, gameVoiceToggleBtn].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', () => {
+                voiceEnabled = !voiceEnabled;
+                localStorage.setItem('voiceEnabled', voiceEnabled);
+                updateVoiceUI();
+                if (!voiceEnabled && window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                    unlockBoard();
+                }
+            });
+        }
+    });
 
     function cleanEmojiForSpeech(text) {
         return text.replace(/[က-￿]+/g, '').trim();
@@ -155,11 +222,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function speakDialogue(text) {
-        if (!voiceEnabled || !window.speechSynthesis) return;
+        if (!voiceEnabled || !window.speechSynthesis) {
+            return;
+        }
+
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(cleanEmojiForSpeech(text));
-        utterance.rate = 1.0;
-        utterance.pitch = 1.1;
+
+        const voice = availableVoices.find(v => v.voiceURI === selectedVoiceURI);
+        if (voice) utterance.voice = voice;
+
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
 
         utterance.onstart = () => {
             lockBoard();
@@ -176,55 +251,31 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.speak(utterance);
     }
 
-    function triggerGameDialogue(eventName, priority = 0, specificPlayerId = null) {
-        // If there's an existing message with HIGHER priority, do not overwrite it.
-        // Exception: Tie messages and Win messages can overwrite Near Win messages
+    function fireDialogue(text, priority = 0) {
         if (priority < currentDialoguePriority && currentDialoguePriority !== 0) {
             return;
         }
 
-        let pName = 'default';
-        let oppName = '';
+        dialogueText.innerText = text;
+        dialogueContainer.classList.add('visible');
+        currentDialoguePriority = priority;
+        speakDialogue(text);
 
-        if (specificPlayerId) {
-            pName = normalizePlayerName(specificPlayerId === 'x' ? players.X : players.O);
-            oppName = getOpponentName(specificPlayerId);
-        } else {
-            pName = normalizePlayerName(currentPlayer === 'X' ? players.X : players.O);
-            oppName = getOpponentName(currentPlayer.toLowerCase());
+        clearTimeout(dialogueTimeout);
+        if (priority < 4) {
+            const waitTime = voiceEnabled ? Math.max(4000, text.length * 60) : 4000;
+            dialogueTimeout = setTimeout(() => {
+                if (currentDialoguePriority < 4) {
+                    dialogueContainer.classList.remove('visible');
+                    currentDialoguePriority = 0;
+                }
+            }, waitTime);
         }
+    }
 
-        let nameKey = pName;
-        if (!specialPlayers[nameKey] || !specialPlayers[nameKey][eventName]) {
-            nameKey = 'default';
-        }
-
-        if (specialPlayers[nameKey] && specialPlayers[nameKey][eventName]) {
-            const options = specialPlayers[nameKey][eventName];
-            let selectedText = options[Math.floor(Math.random() * options.length)];
-
-            if (typeof selectedText === 'function') {
-                selectedText = selectedText(oppName);
-            }
-
-            if (dialogueText.innerText === selectedText) return;
-
-            dialogueText.innerText = selectedText;
-            dialogueContainer.classList.add('visible');
-            currentDialoguePriority = priority;
-            speakDialogue(selectedText);
-
-            clearTimeout(dialogueTimeout);
-
-            if (priority < 2) {
-                dialogueTimeout = setTimeout(() => {
-                    if (currentDialoguePriority < 2) {
-                        dialogueContainer.classList.remove('visible');
-                        currentDialoguePriority = 0;
-                    }
-                }, 4000);
-            }
-        }
+    function getSpecialMatchup(p1, p2) {
+        const arr = [p1, p2].sort().join('_');
+        return specialMatchups[arr] ? arr : null;
     }
 
     const winningConditions = [
@@ -233,7 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
         [0, 4, 8], [2, 4, 6]
     ];
 
-    // Audio Context Setup
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
@@ -277,15 +327,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const emoji = document.createElement('div');
         emoji.className = 'floating-emoji';
         emoji.innerText = smartEmojis[Math.floor(Math.random() * smartEmojis.length)];
-
         emoji.style.left = (e.clientX - 15) + 'px';
         emoji.style.top = (e.clientY - 15) + 'px';
-
         document.getElementById('emoji-container').appendChild(emoji);
-
-        setTimeout(() => {
-            emoji.remove();
-        }, 2000);
+        setTimeout(() => emoji.remove(), 2000);
     }
 
     function triggerWinCelebration() {
@@ -293,24 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
         var end = Date.now() + duration;
 
         (function frame() {
-            confetti({
-                particleCount: 5,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0 },
-                colors: ['#ff8c00', '#ff4757', '#0984e3']
-            });
-            confetti({
-                particleCount: 5,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1 },
-                colors: ['#ff8c00', '#ff4757', '#0984e3']
-            });
-
-            if (Date.now() < end) {
-                requestAnimationFrame(frame);
-            }
+            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff8c00', '#ff4757', '#0984e3'] });
+            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff8c00', '#ff4757', '#0984e3'] });
+            if (Date.now() < end) requestAnimationFrame(frame);
         }());
     }
 
@@ -318,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const winningMessage = () => `${currentPlayer === 'X' ? players.X : players.O} Wins!`;
     const drawMessage = () => `Game Ended in a Draw!`;
 
-    // UI Setup Listeners
     const modeRadios = document.querySelectorAll('input[name="game-mode"]');
     const playerOContainer = document.getElementById('player-o-container');
     const botDifficultyContainer = document.getElementById('bot-difficulty-container');
@@ -339,15 +368,8 @@ document.addEventListener('DOMContentLoaded', () => {
         gameMode = document.querySelector('input[name="game-mode"]:checked').value;
         botDifficulty = document.getElementById('bot-difficulty').value;
 
-        const xInput = document.getElementById('player-x').value.trim();
-        const oInput = document.getElementById('player-o').value.trim();
-        
-        players.X = xInput || 'Player X';
-        if (gameMode === 'bot') {
-            players.O = 'Bot';
-        } else {
-            players.O = oInput || 'Player O';
-        }
+        players.X = document.getElementById('player-x').value.trim() || 'Player X';
+        players.O = gameMode === 'bot' ? 'Bot' : (document.getElementById('player-o').value.trim() || 'Player O');
         
         document.getElementById('name-display-x').innerText = players.X;
         document.getElementById('name-display-o').innerText = players.O;
@@ -355,31 +377,34 @@ document.addEventListener('DOMContentLoaded', () => {
         setupModal.style.display = 'none';
         gameContainer.style.display = 'block';
         gameContainer.style.opacity = '1';
+        updateVoiceUI();
         
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
         resetGame();
 
-        // Trigger Start Dialogue
-        if (gameMode === 'local') {
-            const isVidyaX = normalizePlayerName(players.X) === 'vidya';
-            const isVidyaO = normalizePlayerName(players.O) === 'vidya';
-            if (isVidyaX || isVidyaO) {
-                const combinedMsg = `Welcome ${players.X} & ${players.O}! 🔥`;
-                dialogueText.innerText = combinedMsg;
-                dialogueContainer.classList.add('visible');
-                currentDialoguePriority = 1;
-                speakDialogue(combinedMsg);
+        // Start Logic
+        const p1 = normalizePlayerName(players.X);
+        const p2 = normalizePlayerName(players.O);
+        const matchup = getSpecialMatchup(p1, p2);
 
-                dialogueTimeout = setTimeout(() => {
-                    dialogueContainer.classList.remove('visible');
-                    currentDialoguePriority = 0;
-                }, 4000);
-            } else {
-                triggerGameDialogue('start', 1, 'x');
-            }
+        if (matchup && specialMatchups[matchup].start) {
+            fireDialogue(specialMatchups[matchup].start, 2);
+        } else if (p1 === 'sravan' || p2 === 'sravan') {
+            const arr = specialPlayers['sravan'].start;
+            fireDialogue(arr[Math.floor(Math.random() * arr.length)], 1);
+        } else if (p1 === 'keerthi') {
+            const f = specialPlayers['keerthi'].start[0];
+            fireDialogue(f(getOpponentName('x')), 1);
+        } else if (p2 === 'keerthi') {
+            const f = specialPlayers['keerthi'].start[0];
+            fireDialogue(f(getOpponentName('o')), 1);
+        } else if (p1 === 'vidya' || p2 === 'vidya') {
+            const arr = specialPlayers['vidya'].start;
+            fireDialogue(arr[Math.floor(Math.random() * arr.length)], 1);
         } else {
-            triggerGameDialogue('start', 1, 'x');
+            const arr = specialPlayers['default'].start;
+            fireDialogue(arr[Math.floor(Math.random() * arr.length)], 1);
         }
     });
 
@@ -400,8 +425,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const activeScore = document.getElementById(`score-${currentPlayer.toLowerCase()}`);
         document.querySelectorAll('.score-badge').forEach(b => b.style.transform = 'scale(1)');
-        activeScore.style.transform = 'scale(1.1)';
-        activeScore.style.transition = 'transform 0.3s ease';
+        if(activeScore) {
+            activeScore.style.transform = 'scale(1.1)';
+            activeScore.style.transition = 'transform 0.3s ease';
+        }
     }
 
     function handleCellPlayed(clickedCell, clickedCellIndex, e) {
@@ -419,15 +446,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let botMoveTimeout;
-
     function handlePlayerChange() {
         currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
         statusDisplay.innerHTML = currentPlayerTurnMsg();
         updateScoreDisplay();
 
         if (gameMode === 'bot' && currentPlayer === 'O' && gameActive) {
-            // Wait until board is unlocked to make a move
             const checkAndMove = () => {
                 if (boardLocked) {
                     botMoveTimeout = setTimeout(checkAndMove, 200);
@@ -436,18 +460,120 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             checkAndMove();
-        } else if (gameActive) {
-            if (Math.random() < 0.4) {
-                triggerGameDialogue('turn', 0, currentPlayer.toLowerCase());
-            } else if (Math.random() < 0.3) {
-                triggerGameDialogue('move', 0, currentPlayer === 'X' ? 'o' : 'x');
-            }
         }
+    }
+
+    const resultPanel = document.getElementById('result-panel');
+    const resultTitle = document.getElementById('result-title');
+    const resultMessage = document.getElementById('result-message');
+    const resultIcon = document.getElementById('result-icon');
+    const resultActions = document.getElementById('result-actions');
+    const rematchBtn = document.getElementById('rematch-btn');
+    const homeBtn = document.getElementById('home-btn');
+
+    function showResultPanel(icon, title, message, isHeroMode = false) {
+        resultIcon.innerText = icon;
+        resultTitle.innerText = title;
+        resultMessage.innerHTML = message;
+        resultPanel.style.display = 'block';
+        gameControls.style.display = 'none';
+
+        if (isHeroMode) {
+            resultPanel.classList.add('hero-mode');
+        } else {
+            resultPanel.classList.remove('hero-mode');
+        }
+
+        setTimeout(() => {
+            resultActions.style.display = 'flex';
+        }, 4000);
+    }
+
+    rematchBtn.addEventListener('click', () => {
+        resultPanel.style.display = 'none';
+        resultActions.style.display = 'none';
+        gameControls.style.display = 'flex';
+        dialogueContainer.classList.remove('visible');
+        currentDialoguePriority = 0;
+        resetGame();
+    });
+
+    homeBtn.addEventListener('click', () => {
+        resultPanel.style.display = 'none';
+        resultActions.style.display = 'none';
+        gameControls.style.display = 'flex';
+        gameContainer.style.display = 'none';
+        setupModal.style.display = 'flex';
+        dialogueContainer.classList.remove('visible');
+        currentDialoguePriority = 0;
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        unlockBoard();
+    });
+
+    function resolveFinalDialogue(winnerRaw, loserRaw, isTie, isHeroIntervention) {
+        const w = normalizePlayerName(winnerRaw);
+        const l = normalizePlayerName(loserRaw);
+
+        if (isHeroIntervention) {
+            const matchup = getSpecialMatchup(w, l);
+            if (matchup && specialMatchups[matchup].sravan_win) {
+                return specialMatchups[matchup].sravan_win;
+            }
+            const arr = specialPlayers['sravan'].heroIntervention;
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        if (isTie) {
+            const matchup = getSpecialMatchup(w, l);
+            if (matchup && specialMatchups[matchup].tie) {
+                return specialMatchups[matchup].tie;
+            }
+            if (w === 'sravan' || l === 'sravan') {
+                const arr = specialPlayers['sravan'].tie;
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+            if (w === 'vidya' || l === 'vidya') {
+                return specialPlayers['vidya'].tie[0];
+            }
+            if (w === 'keerthi' || l === 'keerthi') {
+                return specialPlayers['keerthi'].tie[0];
+            }
+            return specialPlayers['default'].tie[0];
+        }
+
+        const matchup = getSpecialMatchup(w, l);
+        if (w === 'sravan' && matchup && specialMatchups[matchup].sravan_win) {
+            return specialMatchups[matchup].sravan_win;
+        }
+
+        if (w === 'sravan') {
+            const arr = specialPlayers['sravan'].win;
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        if (w === 'keerthi') {
+            const f = specialPlayers['keerthi'].win[0];
+            return f(loserRaw);
+        }
+
+        if (l === 'keerthi') {
+            return specialPlayers['keerthi'].lose[0];
+        }
+
+        if (w === 'vidya') {
+            return specialPlayers['vidya'].win[0];
+        }
+
+        if (l === 'vidya') {
+            return specialPlayers['vidya'].lose[0];
+        }
+
+        const f = specialPlayers['default'].win[0];
+        return f(winnerRaw);
     }
 
     function handleResultValidation() {
         let roundWon = false;
-        let nearWin = false;
         let winningCells = [];
         
         for (let i = 0; i <= 7; i++) {
@@ -455,13 +581,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let a = gameState[winCondition[0]];
             let b = gameState[winCondition[1]];
             let c = gameState[winCondition[2]];
-            
-            const arr = [a, b, c];
-            const pCount = arr.filter(v => v === currentPlayer).length;
-            const eCount = arr.filter(v => v === '').length;
-            if (pCount === 2 && eCount === 1) {
-                nearWin = true;
-            }
             
             if (a === '' || b === '' || c === '') continue;
             if (a === b && b === c) {
@@ -471,26 +590,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (nearWin && !roundWon && gameActive) {
-            triggerGameDialogue('nearWin', 1, currentPlayer.toLowerCase());
-        }
+        let roundDraw = !roundWon && !gameState.includes('');
 
         let heroIntervention = false;
+        const pX = normalizePlayerName(players.X);
+        const pO = normalizePlayerName(players.O);
 
-        if (roundWon) {
-            const loser = currentPlayer === 'X' ? 'O' : 'X';
-            const loserName = normalizePlayerName(loser === 'X' ? players.X : players.O);
-            const winnerName = normalizePlayerName(currentPlayer === 'X' ? players.X : players.O);
+        // SRAVAN MASS HERO MODE EVALUATION
+        if ((pX === 'sravan' || pO === 'sravan') && pX !== pO) {
+            const sravanID = pX === 'sravan' ? 'X' : 'O';
+            const oppID = sravanID === 'X' ? 'O' : 'X';
 
-            // Sravan Hero Mode Intervention logic
-            if (loserName === 'sravan' && winnerName !== 'sravan') {
+            if ((roundWon && currentPlayer === oppID) || roundDraw) {
                 heroIntervention = true;
-                roundWon = false; // Cancel the opponent's win
+                roundWon = false;
+                roundDraw = false;
+
+                if (winningCells.length > 0) {
+                    winningCells.forEach(index => {
+                        gameState[index] = '';
+                        cells[index].innerHTML = '';
+                        cells[index].className = 'cell';
+                    });
+                }
 
                 const oldState = [...gameState];
 
-                // We need to build a valid winning combination for Sravan ('loser' is Sravan's mark)
-                // Find the winning condition that requires the least amount of board disruption
                 let bestCondition = winningConditions[0];
                 let maxSravanPiecesInCondition = -1;
 
@@ -498,11 +623,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const condition = winningConditions[i];
                     let sravanPieces = 0;
                     condition.forEach(idx => {
-                        if (oldState[idx] === loser) sravanPieces++;
+                        if (oldState[idx] === sravanID) sravanPieces++;
                     });
 
-                    // Don't choose the opponent's winning line
-                    const isOpponentWinLine = condition[0] === winningCells[0] && condition[1] === winningCells[1] && condition[2] === winningCells[2];
+                    const isOpponentWinLine = winningCells.length > 0 && condition[0] === winningCells[0] && condition[1] === winningCells[1] && condition[2] === winningCells[2];
 
                     if (!isOpponentWinLine && sravanPieces > maxSravanPiecesInCondition) {
                         maxSravanPiecesInCondition = sravanPieces;
@@ -510,66 +634,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Now rebuild the board using the best condition
-                // 1. Count original pieces BEFORE clearing anything
-                let sravanPiecesRemaining = oldState.filter(val => val === loser).length;
-                let oppPiecesRemaining = oldState.filter(val => val === currentPlayer).length;
+                if (winningCells.length > 0) {
+                    winningCells.forEach(index => oldState[index] = oppID);
+                }
 
-                // 2. Clear visual board and state
+                let sravanPiecesRemaining = oldState.filter(val => val === sravanID).length;
+                let oppPiecesRemaining = oldState.filter(val => val === oppID).length;
+
                 for (let j = 0; j < 9; j++) {
                     gameState[j] = '';
                     cells[j].innerHTML = '';
                     cells[j].className = 'cell';
                 }
 
-                // 3. Assign Sravan's winning line first
                 bestCondition.forEach(idx => {
-                    gameState[idx] = loser;
-                    cells[idx].innerHTML = loser;
-                    cells[idx].className = `cell ${loser.toLowerCase()}`;
+                    gameState[idx] = sravanID;
+                    cells[idx].innerHTML = sravanID;
+                    cells[idx].className = `cell ${sravanID.toLowerCase()}`;
                     sravanPiecesRemaining--;
                 });
 
-                // 4. Fill in the rest of the board, trying to keep original pieces where possible
                 for (let j = 0; j < 9; j++) {
                     if (gameState[j] === '') {
-                        if (oldState[j] === currentPlayer && oppPiecesRemaining > 0) {
-                            gameState[j] = currentPlayer;
-                            cells[j].innerHTML = currentPlayer;
-                            cells[j].className = `cell ${currentPlayer.toLowerCase()}`;
+                        if (oldState[j] === oppID && oppPiecesRemaining > 0) {
+                            gameState[j] = oppID;
+                            cells[j].innerHTML = oppID;
+                            cells[j].className = `cell ${oppID.toLowerCase()}`;
                             oppPiecesRemaining--;
-                        } else if (oldState[j] === loser && sravanPiecesRemaining > 0) {
-                            gameState[j] = loser;
-                            cells[j].innerHTML = loser;
-                            cells[j].className = `cell ${loser.toLowerCase()}`;
+                        } else if (oldState[j] === sravanID && sravanPiecesRemaining > 0) {
+                            gameState[j] = sravanID;
+                            cells[j].innerHTML = sravanID;
+                            cells[j].className = `cell ${sravanID.toLowerCase()}`;
                             sravanPiecesRemaining--;
                         }
                     }
                 }
 
-                // If we still have pieces left (because their original spots were overwritten by the win line),
-                // put them in the first available empty spots.
                 for (let j = 0; j < 9; j++) {
                     if (gameState[j] === '') {
                         if (oppPiecesRemaining > 0) {
-                            gameState[j] = currentPlayer;
-                            cells[j].innerHTML = currentPlayer;
-                            cells[j].className = `cell ${currentPlayer.toLowerCase()}`;
+                            gameState[j] = oppID;
+                            cells[j].innerHTML = oppID;
+                            cells[j].className = `cell ${oppID.toLowerCase()}`;
                             oppPiecesRemaining--;
                         } else if (sravanPiecesRemaining > 0) {
-                            gameState[j] = loser;
-                            cells[j].innerHTML = loser;
-                            cells[j].className = `cell ${loser.toLowerCase()}`;
+                            gameState[j] = sravanID;
+                            cells[j].innerHTML = sravanID;
+                            cells[j].className = `cell ${sravanID.toLowerCase()}`;
                             sravanPiecesRemaining--;
                         }
                     }
                 }
 
                 winningCells = bestCondition;
-                currentPlayer = loser; // Transfer turn state to Sravan so Sravan is declared winner
+                currentPlayer = sravanID;
                 roundWon = true;
-
-                triggerGameDialogue('heroIntervention', 2, loser.toLowerCase());
             }
         }
 
@@ -588,29 +707,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             triggerWinCelebration();
+            playSound('win');
 
-            if (gameMode === 'bot' && currentPlayer === 'X' && normalizePlayerName(players.X) === 'vidya') {
-                triggerGameDialogue('winBot', 2, 'x');
-            } else if (!heroIntervention) {
-                triggerGameDialogue('win', 2, currentPlayer.toLowerCase());
-                setTimeout(() => triggerGameDialogue('lose', 2, currentPlayer === 'X' ? 'o' : 'x'), 4000);
-            }
+            const wRaw = currentPlayer === 'X' ? players.X : players.O;
+            const lRaw = currentPlayer === 'X' ? players.O : players.X;
+            const dText = resolveFinalDialogue(wRaw, lRaw, false, heroIntervention);
 
-            const pName = players[currentPlayer];
-            let dialogueMsg = '';
-            if (currentDialoguePriority >= 1 && dialogueContainer.classList.contains('visible')) {
-                dialogueMsg = `<br/><br/><i>"${dialogueText.innerText}"</i>`;
-            }
+            fireDialogue(dText, 4);
 
-            const title = heroIntervention ? "🦸 HERO WINS!" : `${pName} WINS!`;
+            const title = heroIntervention ? "🦸 HERO MODE" : `🏆 ${wRaw} WINS`;
             const icon = heroIntervention ? "⚡" : "🏆";
 
-            showResultModal(icon, title, `Outstanding move.` + dialogueMsg);
+            showResultPanel(icon, title, `<i>"${dText}"</i>`, heroIntervention);
 
             return;
         }
 
-        let roundDraw = !gameState.includes('');
         if (roundDraw) {
             statusDisplay.innerHTML = drawMessage();
             statusDisplay.style.color = 'var(--text-color)';
@@ -619,28 +731,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (gameMode === 'bot' && botDifficulty === 'hard') hardGamesPlayed++;
             playSound('draw');
 
-            if (normalizePlayerName(players.X) === 'sravan') {
-                triggerGameDialogue('tie', 2, 'x');
-            } else if (normalizePlayerName(players.O) === 'sravan') {
-                triggerGameDialogue('tie', 2, 'o');
-            } else if (normalizePlayerName(players.X) === 'vidya') {
-                triggerGameDialogue('tie', 2, 'x');
-            } else if (normalizePlayerName(players.O) === 'vidya') {
-                triggerGameDialogue('tie', 2, 'o');
-            } else if (normalizePlayerName(players.X) === 'keerthi') {
-                triggerGameDialogue('tie', 2, 'x');
-            } else if (normalizePlayerName(players.O) === 'keerthi') {
-                triggerGameDialogue('tie', 2, 'o');
-            } else {
-                triggerGameDialogue('tie', 2, 'x');
-            }
+            const dText = resolveFinalDialogue(players.X, players.O, true, false);
+            fireDialogue(dText, 4);
 
-            let dialogueMsg = '';
-            if (currentDialoguePriority >= 1 && dialogueContainer.classList.contains('visible')) {
-                dialogueMsg = `<br/><br/><i>"${dialogueText.innerText}"</i>`;
-            }
-            showResultModal("🤝", "IT'S A TIE!", dialogueMsg);
-
+            showResultPanel("🤝", "IT'S A TIE", `<i>"${dText}"</i>`);
             return;
         }
 
@@ -653,13 +747,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return acc;
         }, []);
 
-        if (checkWin(board, 'X')) {
-            return { score: -10 };
-        } else if (checkWin(board, 'O')) {
-            return { score: 10 };
-        } else if (availableSpots.length === 0) {
-            return { score: 0 };
-        }
+        if (checkWin(board, 'X')) return { score: -10 };
+        else if (checkWin(board, 'O')) return { score: 10 };
+        else if (availableSpots.length === 0) return { score: 0 };
 
         const moves = [];
         for (let i = 0; i < availableSpots.length; i++) {
@@ -668,11 +758,9 @@ document.addEventListener('DOMContentLoaded', () => {
             board[availableSpots[i]] = player;
 
             if (player === 'O') {
-                const result = getBestMove(board, 'X');
-                move.score = result.score;
+                move.score = getBestMove(board, 'X').score;
             } else {
-                const result = getBestMove(board, 'O');
-                move.score = result.score;
+                move.score = getBestMove(board, 'O').score;
             }
 
             board[availableSpots[i]] = '';
@@ -746,11 +834,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (trickExecuted) {
                 moveIndex = getBestMove([...gameState], 'O').index;
             } else {
-                if (Math.random() < 0.5) {
-                    moveIndex = makeRandomMove();
-                } else {
-                    moveIndex = getBestMove([...gameState], 'O').index;
-                }
+                if (Math.random() < 0.5) moveIndex = makeRandomMove();
+                else moveIndex = getBestMove([...gameState], 'O').index;
             }
         }
 
@@ -766,57 +851,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleCellClick(clickedCellEvent) {
-        if (boardLocked) {
-            return;
-        }
-        if (gameMode === 'bot' && currentPlayer === 'O') {
-            return;
-        }
+        if (boardLocked) return;
+        if (gameMode === 'bot' && currentPlayer === 'O') return;
 
         const clickedCell = clickedCellEvent.target;
         const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
 
-        if (gameState[clickedCellIndex] !== '' || !gameActive) {
-            return;
-        }
+        if (gameState[clickedCellIndex] !== '' || !gameActive) return;
 
         handleCellPlayed(clickedCell, clickedCellIndex, clickedCellEvent);
         handleResultValidation();
     }
-
-    // Result Modal Logic
-    const resultModal = document.getElementById('result-modal');
-    const resultTitle = document.getElementById('result-title');
-    const resultMessage = document.getElementById('result-message');
-    const resultIcon = document.getElementById('result-icon');
-    const rematchBtn = document.getElementById('rematch-btn');
-    const homeBtn = document.getElementById('home-btn');
-
-    function showResultModal(icon, title, message) {
-        setTimeout(() => {
-            resultIcon.innerText = icon;
-            resultTitle.innerText = title;
-            resultMessage.innerHTML = message;
-            resultModal.style.display = 'flex';
-        }, 1500);
-    }
-
-    rematchBtn.addEventListener('click', () => {
-        resultModal.style.display = 'none';
-        dialogueContainer.classList.remove('visible');
-        currentDialoguePriority = 0;
-        resetGame();
-    });
-
-    homeBtn.addEventListener('click', () => {
-        resultModal.style.display = 'none';
-        gameContainer.style.display = 'none';
-        setupModal.style.display = 'flex';
-        dialogueContainer.classList.remove('visible');
-        currentDialoguePriority = 0;
-        if (window.speechSynthesis) window.speechSynthesis.cancel();
-        unlockBoard();
-    });
 
     function resetGame() {
         gameActive = true;
@@ -849,5 +894,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     cells.forEach(cell => cell.addEventListener('click', handleCellClick));
-    resetButton.addEventListener('click', resetGame);
+    resetButton.addEventListener('click', () => {
+        resultPanel.style.display = 'none';
+        resultActions.style.display = 'none';
+        gameControls.style.display = 'flex';
+        dialogueContainer.classList.remove('visible');
+        currentDialoguePriority = 0;
+        resetGame();
+    });
 });
