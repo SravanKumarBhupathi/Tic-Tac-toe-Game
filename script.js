@@ -147,9 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    let voiceEnabled = localStorage.getItem('voiceEnabled') !== 'false'; // Default ON
-    let selectedVoiceURI = localStorage.getItem('selectedVoiceURI') || '';
-    let currentDialoguePriority = 0; // 0=None, 1=Start, 2=Matchup, 3=HeroIntervention, 4=Result
+    const voiceEnabled = true;
+        let currentDialoguePriority = 0; // 0=None, 1=Start, 2=Matchup, 3=HeroIntervention, 4=Result
     let dialogueTimeout;
     let isDialogueSpeaking = false;
     let boardLocked = false;
@@ -160,86 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dialogueText = document.getElementById('dialogue-text');
 
     // Voice Setup UI
-    const voiceToggleBtn = document.getElementById('setup-voice-toggle');
-    const gameVoiceToggleBtn = document.getElementById('voice-toggle-btn');
-    const voiceSelect = document.getElementById('voice-select');
-
-    function populateVoiceList() {
-        if (!window.speechSynthesis) return;
-        availableVoices = speechSynthesis.getVoices();
-        if (availableVoices.length === 0) return;
-
-        voiceSelect.innerHTML = '';
-
-        // Try to find a good English Male voice by default if none selected
-        let defaultVoice = availableVoices.find(v => v.lang.startsWith('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Guy') || v.name.includes('Arthur')));
-        if (!defaultVoice) defaultVoice = availableVoices.find(v => v.lang.startsWith('en'));
-        if (!defaultVoice) defaultVoice = availableVoices[0];
-
-        let foundSelected = false;
-
-        availableVoices.forEach((voice) => {
-            if (voice.lang.startsWith('en')) {
-                const option = document.createElement('option');
-                option.textContent = `${voice.name} (${voice.lang})`;
-                option.value = voice.voiceURI;
-
-                if (selectedVoiceURI === voice.voiceURI) {
-                    option.selected = true;
-                    foundSelected = true;
-                }
-
-                voiceSelect.appendChild(option);
-            }
-        });
-
-        if (!foundSelected && defaultVoice) {
-            selectedVoiceURI = defaultVoice.voiceURI;
-            voiceSelect.value = selectedVoiceURI;
-            localStorage.setItem('selectedVoiceURI', selectedVoiceURI);
-        }
-    }
-
-    if (window.speechSynthesis) {
-        populateVoiceList();
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = populateVoiceList;
-        }
-    }
-
-    voiceSelect.addEventListener('change', (e) => {
-        selectedVoiceURI = e.target.value;
-        localStorage.setItem('selectedVoiceURI', selectedVoiceURI);
-        speakDialogue("Voice selected.");
-    });
-
-    function updateVoiceUI() {
-        if (voiceToggleBtn) {
-            voiceToggleBtn.classList.toggle('active', voiceEnabled);
-            voiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
-            voiceToggleBtn.setAttribute('title', voiceEnabled ? 'Voice On' : 'Voice Off');
-            voiceSelect.disabled = !voiceEnabled;
-        }
-        if (gameVoiceToggleBtn) {
-            gameVoiceToggleBtn.classList.toggle('active', voiceEnabled);
-            gameVoiceToggleBtn.innerHTML = voiceEnabled ? '<span class="icon">🔊</span>' : '<span class="icon">🔇</span>';
-            gameVoiceToggleBtn.setAttribute('title', voiceEnabled ? 'Voice On' : 'Voice Off');
-        }
-    }
-
-    [voiceToggleBtn, gameVoiceToggleBtn].forEach(btn => {
-        if (btn) {
-            btn.addEventListener('click', () => {
-                voiceEnabled = !voiceEnabled;
-                localStorage.setItem('voiceEnabled', voiceEnabled);
-                updateVoiceUI();
-                if (!voiceEnabled && window.speechSynthesis) {
-                    window.speechSynthesis.cancel();
-                    unlockBoard();
-                }
-            });
-        }
-    });
 
     function cleanEmojiForSpeech(text) {
         return text.replace(/[က-￿]+/g, '').trim();
@@ -264,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         unlockBoard();
     });
 
-    function speakDialogue(text) {
+        function speakDialogue(text) {
         if (!voiceEnabled || !window.speechSynthesis) {
             return;
         }
@@ -272,8 +191,12 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(cleanEmojiForSpeech(text));
 
-        const voice = availableVoices.find(v => v.voiceURI === selectedVoiceURI);
-        if (voice) utterance.voice = voice;
+        let availableVoices = window.speechSynthesis.getVoices();
+        let defaultVoice = availableVoices.find(v => v.lang.startsWith('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Guy') || v.name.includes('Arthur')));
+        if (!defaultVoice) defaultVoice = availableVoices.find(v => v.lang.startsWith('en'));
+        if (!defaultVoice && availableVoices.length > 0) defaultVoice = availableVoices[0];
+
+        if (defaultVoice) utterance.voice = defaultVoice;
 
         utterance.rate = 0.95;
         utterance.pitch = 1.0;
@@ -420,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupModal.style.display = 'none';
         gameContainer.style.display = 'block';
         gameContainer.style.opacity = '1';
-        updateVoiceUI();
+
         
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
