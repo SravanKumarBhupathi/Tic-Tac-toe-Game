@@ -80,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 "It's a tie! 🤝 Keerthi, you definitely have the brain 🧠... but after travelling with Vidya, some of that brainpower seems to have gone missing. 😂😜"
             ]
         },
+        'ranjitha': {
+            start: ["Ayyo! Ranjitha game-ge entry kottiddale! 😂 Ivattu gelloke bandiddalo, illa game-anne confuse maadoke bandiddalo nodona! 🤣"],
+            win: ["Enidu?! Ranjitha gedbitla?! 😂😂 Idanna yaaru nambabedi… modalu scoreboard check maadi! 🤣🔥"],
+            lose: ["Ayyo Ranjitha! 😂 Ishtu confidence itkondu bandu heege sotbitteyalla! 🤣 Parvaagilla… mundina sala aadru gelloke try maadu! 😜"],
+            tie: ["Tie ayta?! 😂 Gellaloo illa… solaloo illa… Ranjitha, neenu aata aadideya, illa time-pass maadideya?! 🤣"]
+        },
         'vidya': {
             start: ["Welcome Vidya! 😈 Let's see if that brain is ready today.", "Vidya has entered the game! 😂 Please locate your brain before making the first move. 🧠"],
             win: ["VIDYA WINS! 🏆 Okay... that was actually impressive. 😂"],
@@ -90,6 +96,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Special Matchups mapping
     const specialMatchups = {
+        'ranjitha_sravan': {
+            start: "Oho! Ranjitha, neenu Sravan jothe aadoke bandiddiya?! 😂 Developer jothe game aadoke bandiddiya… dhairya ideyalla! 🤣🤟",
+            sravan_win: "Ayyo Ranjitha! 😂 Developer munde ninna strategy ella kelasa maadalla! 🤣🤟 Matte try maadu!"
+        },
+        'sravan_ranjitha': {
+            start: "Oho! Ranjitha, neenu Sravan jothe aadoke bandiddiya?! 😂 Developer jothe game aadoke bandiddiya… dhairya ideyalla! 🤣🤟",
+            sravan_win: "Ayyo Ranjitha! 😂 Developer munde ninna strategy ella kelasa maadalla! 🤣🤟 Matte try maadu!"
+        },
+        'ranjitha_vidya': {
+            start: "Oho! Ranjitha mattu Vidya onde game-alli! 😂 Iga yaaru gelltaare annodakkinta… yaaru modalu brain use maadtaare annodu nodona! 🤣🧠",
+            ranjitha_win: "Ayyo Vidya! 😂 Ranjitha ninnanne solisbitlalla! Ivattu brain kelasa maadlilla ansutte! 🤣",
+            vidya_win: "En Ranjitha! 😂 Vidya-ge gelloke bittiyalla! Ishtu dodda chance-na haalu maadkonde! 🤣",
+            tie: "Tie ayta?! 😂 Ranjitha mattu Vidya ibbaru gelloke aaglilla… ibbarigu congratulations! 🤣🤝"
+        },
+        'vidya_ranjitha': {
+            start: "Oho! Ranjitha mattu Vidya onde game-alli! 😂 Iga yaaru gelltaare annodakkinta… yaaru modalu brain use maadtaare annodu nodona! 🤣🧠",
+            ranjitha_win: "Ayyo Vidya! 😂 Ranjitha ninnanne solisbitlalla! Ivattu brain kelasa maadlilla ansutte! 🤣",
+            vidya_win: "En Ranjitha! 😂 Vidya-ge gelloke bittiyalla! Ishtu dodda chance-na haalu maadkonde! 🤣",
+            tie: "Tie ayta?! 😂 Ranjitha mattu Vidya ibbaru gelloke aaglilla… ibbarigu congratulations! 🤣🤝"
+        },
+        'ranjitha_keerthi': {
+            start: "Oho! Ranjitha mattu Keerthi! 😂 Ibbaru tumba serious-aagi kootiddare… aadre strategy yaar hatra ide annodu innu gottilla! 🤣",
+            ranjitha_win: "En Keerthi! 😂 Ranjitha ishtu sulabhavaagi gedbitlalla! Neenu strategy yochne maadta iddagaale game mugidoytu! 🤣",
+            keerthi_win: "Ayyo Ranjitha! 😂 Ivattu ninna strategy ellige hoytu? Keerthi ninnanne clean-aagi mugisbitlu! 🤣",
+            tie: "Tie?! 😂 Ibbaru gellalilla… ibbaru solalilla… andre ibbaru safe-aagi manege hogbahudu! 🤣🤝"
+        },
+        'keerthi_ranjitha': {
+            start: "Oho! Ranjitha mattu Keerthi! 😂 Ibbaru tumba serious-aagi kootiddare… aadre strategy yaar hatra ide annodu innu gottilla! 🤣",
+            ranjitha_win: "En Keerthi! 😂 Ranjitha ishtu sulabhavaagi gedbitlalla! Neenu strategy yochne maadta iddagaale game mugidoytu! 🤣",
+            keerthi_win: "Ayyo Ranjitha! 😂 Ivattu ninna strategy ellige hoytu? Keerthi ninnanne clean-aagi mugisbitlu! 🤣",
+            tie: "Tie?! 😂 Ibbaru gellalilla… ibbaru solalilla… andre ibbaru safe-aagi manege hogbahudu! 🤣🤝"
+        },
+        'ranjitha_ranjitha': {
+            start: "Enidu?! Ranjitha vs Ranjitha?! 😂 Obbalu geddru Ranjithane… sothru Ranjithane! 🤣 Game-gu iga confusion!",
+            win: "Ranjitha geddiddale! 😂 Aadare sothirodu kooda Ranjithane! 🤣 Idu yaava level confusion anta!",
+            tie: "Tie aytante! 😂 Ibbaru Ranjitha aagirodrinda yaaranna blame maadodu anta game-gu gottagta illa! 🤣"
+        },
         'sravan_vidya': {
             start: "Brainless Vidya is challenging the developer Sravan? 😂 Okay... let's start.",
             sravan_win: "I told you, brainless Vidya! You really thought Sravan would lose? 😂🦸"
@@ -399,6 +442,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (p2 === 'keerthi') {
             const f = specialPlayers['keerthi'].start[0];
             fireDialogue(f(getOpponentName('o')), 1);
+        } else if (p1 === 'ranjitha' || p2 === 'ranjitha') {
+            const arr = specialPlayers['ranjitha'].start;
+            fireDialogue(arr[Math.floor(Math.random() * arr.length)], 1);
         } else if (p1 === 'vidya' || p2 === 'vidya') {
             const arr = specialPlayers['vidya'].start;
             fireDialogue(arr[Math.floor(Math.random() * arr.length)], 1);
@@ -532,6 +578,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const arr = specialPlayers['sravan'].tie;
                 return arr[Math.floor(Math.random() * arr.length)];
             }
+            if (w === 'ranjitha' || l === 'ranjitha') {
+                const arr = specialPlayers['ranjitha'].tie;
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
             if (w === 'vidya' || l === 'vidya') {
                 return specialPlayers['vidya'].tie[0];
             }
@@ -545,6 +595,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (w === 'sravan' && matchup && specialMatchups[matchup].sravan_win) {
             return specialMatchups[matchup].sravan_win;
         }
+
+        if (w === 'ranjitha' && matchup && specialMatchups[matchup].win) {
+            return specialMatchups[matchup].win;
+        }
+        if (w === 'ranjitha' && matchup && specialMatchups[matchup].ranjitha_win) {
+            return specialMatchups[matchup].ranjitha_win;
+        }
+        if (w === 'vidya' && matchup && specialMatchups[matchup].vidya_win) {
+            return specialMatchups[matchup].vidya_win;
+        }
+        if (w === 'keerthi' && matchup && specialMatchups[matchup].keerthi_win) {
+            return specialMatchups[matchup].keerthi_win;
+        }
+
 
         if (w === 'sravan') {
             const arr = specialPlayers['sravan'].win;
@@ -560,8 +624,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return specialPlayers['keerthi'].lose[0];
         }
 
+        if (w === 'ranjitha') {
+            const arr = specialPlayers['ranjitha'].win;
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
         if (w === 'vidya') {
             return specialPlayers['vidya'].win[0];
+        }
+
+        if (l === 'ranjitha') {
+            const arr = specialPlayers['ranjitha'].lose;
+            return arr[Math.floor(Math.random() * arr.length)];
         }
 
         if (l === 'vidya') {

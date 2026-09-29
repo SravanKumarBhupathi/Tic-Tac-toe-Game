@@ -482,3 +482,33 @@ button {
     border-color: #ff4757;
     background: linear-gradient(to bottom, #fff, #fff5f5);
 }
+
+
+/* Mobile UI fixes for Result Actions */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #result-panel {
+        padding: 1rem;
+        margin-top: 1rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    #result-actions {
+        display: flex !important; /* Force display when visible */
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    #result-actions .primary-btn, #result-actions .secondary-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
