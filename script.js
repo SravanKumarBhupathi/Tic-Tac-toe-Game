@@ -248,10 +248,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getBestMove(board, player) {
-        const availableSpots = board.reduce((acc, cell, index) => {
-            if (cell === '') acc.push(index);
-            return acc;
-        }, []);
+        const availableSpots = [];
+        for (let i = 0; i < board.length; i++) {
+            if (board[i] === '') {
+                availableSpots.push(i);
+            }
+        }
 
         if (checkWin(board, 'X')) {
             return { score: -10 };
